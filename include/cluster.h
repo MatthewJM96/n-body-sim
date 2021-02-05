@@ -15,6 +15,7 @@ namespace cluster {
 
     template <typename Precision, typename = typename std::enable_if<std::is_floating_point<Precision>::value>::type>
     struct Cluster {
+        Member<Precision> centroid;
         Member<Precision>* members;
         ui32 member_count;
     }
@@ -26,7 +27,7 @@ namespace cluster {
     void kpp(Member<Precision>* members, ui32 member_count, Member<Precision>* centroids, ui32 centroid_count);
 
     template <typename Precision>
-    void k_means(Member<Precision>* members, ui32 member_count, Member<Precision>* centroids, Cluster<Precision>* clusters, ui32 centroid_count);
+    void k_means(Member<Precision>* members, ui32 member_count, Member<Precision>* centroids, ui32 centroid_count, OUT Cluster<Precision>*& clusters);
 };
 
 #include "cluster.inl"

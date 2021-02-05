@@ -86,3 +86,15 @@ void cluster::kpp(Member<Precision>* members, ui32 member_count, Member<Precisio
         }
     }
 }
+
+template <typename Precision>
+void cluster::k_means(Member<Precision>* members, ui32 member_count, Member<Precision>* centroids, ui32 centroid_count, OUT Cluster<Precision>*& clusters) {
+    /************
+       Initialise clusters.
+                   ************/
+
+    for (ui32 cluster_idx = 0; cluster_idx < centroid_count; ++cluster_idx) {
+        clusters[cluster_idx] = new Member<Precision>[]
+    }
+
+}
