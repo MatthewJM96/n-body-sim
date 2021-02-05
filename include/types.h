@@ -5,6 +5,13 @@
 
 #include <cstdint>
 
+// Decorators
+
+// Indicates a parameter that will be initialised inside function call, including any necesasry memory allocation.
+#define OUT
+
+// Types
+
 typedef int8_t   i8;   ///< 8-bit signed integer
 typedef int16_t  i16;  ///< 16-bit signed integer
 typedef int32_t  i32;  ///< 32-bit signed integer
