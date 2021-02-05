@@ -18,7 +18,12 @@ namespace cluster {
         Member<Precision> centroid;
         Member<Precision>* members;
         ui32 member_count;
-    }
+    };
+
+    struct KMeansOptions {
+        ui32 max_iterations;
+        ui32 acceptable_changes_per_iteration;
+    };
 
     template <typename Precision>
     Precision member_distance_2(Member<Precision> lhs, Member<Precision> rhs);
@@ -27,7 +32,7 @@ namespace cluster {
     void kpp(Member<Precision>* members, ui32 member_count, Member<Precision>* centroids, ui32 centroid_count);
 
     template <typename Precision>
-    void k_means(Member<Precision>* members, ui32 member_count, Member<Precision>* centroids, ui32 centroid_count, OUT Cluster<Precision>*& clusters);
+    void k_means(Member<Precision>* members, ui32 member_count, Member<Precision>* centroids, ui32 centroid_count, KMeansOptions options, OUT Cluster<Precision>*& clusters);
 };
 
 #include "cluster.inl"

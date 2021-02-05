@@ -88,13 +88,18 @@ void cluster::kpp(Member<Precision>* members, ui32 member_count, Member<Precisio
 }
 
 template <typename Precision>
-void cluster::k_means(Member<Precision>* members, ui32 member_count, Member<Precision>* centroids, ui32 centroid_count, OUT Cluster<Precision>*& clusters) {
+void cluster::k_means(Member<Precision>* members, ui32 member_count, Member<Precision>* centroids, ui32 centroid_count, KMeansOptions options, OUT Cluster<Precision>*& clusters) {
     /************
-       Initialise clusters.
-                   ************/
+       Set up metadata for k-means algorithm.
+                                    ************/
 
-    for (ui32 cluster_idx = 0; cluster_idx < centroid_count; ++cluster_idx) {
-        clusters[cluster_idx] = new Member<Precision>[]
-    }
+    Member<Precision>* new_centroids = new Member<Precision>[centroid_count];
 
+    /************
+       Set up metadata for k-means algorithm.
+                                    ************/
+
+    do {
+
+    } while ();
 }
