@@ -13,7 +13,7 @@ namespace cluster {
         T x, y, z;
     };
 
-    template <typename Precision, typename = typename std::enable_if<std::is_floating_point<Precision>::value>::type>
+    template <typename Precision>
     Precision member_distance_2(Member<Precision> lhs, Member<Precision> rhs);
 
     template <typename Precision>

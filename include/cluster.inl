@@ -1,7 +1,7 @@
 #include <limits>
 #include <random>
 
-template <typename Precision, typename = typename std::enable_if<std::is_floating_point<Precision>::value>::type>
+template <typename Precision>
 Precision cluster::member_distance_2(Member<Precision> lhs, Member<Precision> rhs) {
     return (lhs.x - rhs.x) * (lhs.x - rhs.x)
             + (lhs.y - rhs.y) * (lhs.y - rhs.y)
