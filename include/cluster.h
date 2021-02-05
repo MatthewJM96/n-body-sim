@@ -17,7 +17,7 @@ namespace cluster {
     Precision member_distance_2(Member<Precision> lhs, Member<Precision> rhs);
 
     template <typename Precision>
-    void cluster::kpp(Member<Precision>* members, ui32 member_count, Member<Precision>* centroids, ui32 centroid_count);
+    void kpp(Member<Precision>* members, ui32 member_count, Member<Precision>* centroids, ui32 centroid_count);
 };
 
 #include "cluster.inl"
