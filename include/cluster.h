@@ -18,6 +18,9 @@ namespace cluster {
 
     template <typename Precision>
     void kpp(Member<Precision>* members, ui32 member_count, Member<Precision>* centroids, ui32 centroid_count);
+
+    template <typename Precision>
+    void k_means(Member<Precision>* members, ui32 member_count, Member<Precision>* centroids, Member<Precision>** clusters, ui32 centroid_count);
 };
 
 #include "cluster.inl"
