@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <limits>
 #include <random>
 
@@ -88,18 +89,73 @@ void cluster::kpp(Member<Precision>* members, ui32 member_count, Member<Precisio
 }
 
 template <typename Precision>
+ui32 cluster::impl::nearest_centroid(const Member<Precision>& member, Member<Precision>* centroids, ui32 centroid_count) {
+    ui32      nearest_centroid = 0;
+    Precision nearest_centroid_distance_2 = std::numeric_limits<Precision>::max();
+
+    for (ui32 centroid_idx = 0; centroid_idx < centroid_count; ++centroid_idx) {
+        Precision centroid_distance_2 = member_distance_2(member, centroids[centroid_idx]);
+
+        if (centroid_distance_2 < nearest_centroid_distance_2) {
+            nearest_centroid = centroid_idx;
+            nearest_centroid_distance_2 = centroid_distance_2;
+        }
+    }
+
+    return nearest_centroid;
+}
+
+// TODO(Matthew): Eventually we want to be able to provide an initial cluster set and only do copies on entries that change from one cluster to another after so many iterations.
+template <typename Precision>
 void cluster::k_means(Member<Precision>* members, ui32 member_count, Member<Precision>* centroids, ui32 centroid_count, KMeansOptions options, OUT Cluster<Precision>*& clusters) {
     /************
        Set up metadata for k-means algorithm.
                                     ************/
 
     Member<Precision>* new_centroids = new Member<Precision>[centroid_count];
+    ui32* member_centroid_map = new ui32[member_count];
+    ui32* members_count_in_centroid = new ui32[member_count];
 
     /************
-       Set up metadata for k-means algorithm.
-                                    ************/
+       Perform k-means algorithm.
+                        ************/
 
+    ui32 iterations = 0;
+    ui32 changes_in_iteration = 0;
     do {
+        // Complete if max iterations has been reached.
+        if (++iterations > options.max_iterations) break;
 
-    } while ();
+        // Zero pertinent data.
+        changes_in_iteration = 0;
+        std::fill_n(new_centroids, centroid_count, Member<Precision>{0.0, 0.0, 0.0});
+        std::fill_n(members_count_in_centroid, member_count, 0);
+
+        // Iterate each member of the population on which the clusters are being built.
+        // For each member, determine which centroid it is nearest to and add its position
+        // to a new centroid which will then take its position as the average position of
+        // the associated members.
+        for (ui32 member_idx = 0; member_idx < member_count; ++member_idx) {
+            ui32 nearest_centroid_idx = impl::nearest_centroid(members[member_idx], centroids, centroid_count);
+
+            if (member_centroid_map[member_idx] != nearest_centroid_idx) {
+                ++changes_in_iteration;
+                member_centroid_map[member_idx] = nearest_centroid_idx;
+            }
+
+            new_centroids[nearest_centroid_idx].x += members[member_idx].x;
+            new_centroids[nearest_centroid_idx].y += members[member_idx].y;
+            new_centroids[nearest_centroid_idx].z += members[member_idx].z;
+
+            ++members_count_in_centroid[nearest_centroid_idx];
+        }
+
+        // Using total members associated with each centroid, calculate the new
+        // centroid for that group by taking the average of their positions.
+        for (ui32 centroid_idx = 0; centroid_idx < centroid_count; ++centroid_idx) {
+            new_centroids[centroid_idx].x /= members_count_in_centroid[centroid_idx];
+            new_centroids[centroid_idx].y /= members_count_in_centroid[centroid_idx];
+            new_centroids[centroid_idx].z /= members_count_in_centroid[centroid_idx];
+        }
+    } while (changes_in_iteration > options.acceptable_changes_per_iteration);
 }

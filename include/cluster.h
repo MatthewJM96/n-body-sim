@@ -33,6 +33,11 @@ namespace cluster {
 
     template <typename Precision>
     void k_means(Member<Precision>* members, ui32 member_count, Member<Precision>* centroids, ui32 centroid_count, KMeansOptions options, OUT Cluster<Precision>*& clusters);
+
+    namespace impl {
+        template <typename Precision>
+        ui32 nearest_centroid(const Member<Precision>& member, Member<Precision>* centroids, ui32 centroid_count);
+    };
 };
 
 #include "cluster.inl"
