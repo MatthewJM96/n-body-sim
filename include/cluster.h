@@ -8,9 +8,9 @@
 #include "types.h"
 
 namespace cluster {
-    template <typename T, typename = typename std::enable_if<std::is_floating_point<T>::value>::type>
+    template <typename Precision, typename = typename std::enable_if<std::is_floating_point<Precision>::value>::type>
     struct Member {
-        T x, y, z;
+        Precision x, y, z;
     };
 
     template <typename Precision>
