@@ -197,10 +197,10 @@ void cluster::k_means(const Cluster<Precision>* initial_clusters, ui32 cluster_c
 
         // Using total members associated with each centroid, calculate the new
         // centroid for that group by taking the average of their positions.
-        for (ui32 centroid_idx = 0; centroid_idx < centroid_count; ++centroid_idx) {
-            new_centroids[centroid_idx].x /= members_count_in_cluster[centroid_idx];
-            new_centroids[centroid_idx].y /= members_count_in_cluster[centroid_idx];
-            new_centroids[centroid_idx].z /= members_count_in_cluster[centroid_idx];
+        for (ui32 cluster_idx = 0; cluster_idx < cluster_count; ++cluster_idx) {
+            clusters[cluster_idx].x /= members_count_in_cluster[cluster_idx];
+            clusters[cluster_idx].y /= members_count_in_cluster[cluster_idx];
+            clusters[cluster_idx].z /= members_count_in_cluster[cluster_idx];
         }
     } while (changes_in_iteration > options.acceptable_changes_per_iteration);
 
