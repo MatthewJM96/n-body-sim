@@ -86,6 +86,13 @@ void cluster::kpp(Member<Precision>* members, ui32 member_count, Member<Precisio
             }
         }
     }
+
+    /************
+       Clean-up.
+       ************/
+
+    delete[] member_chosen_as_centroid;
+    delete[] cumulative_distance_2s;
 }
 
 template <typename Precision>
