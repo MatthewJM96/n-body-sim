@@ -112,16 +112,20 @@ ui32 cluster::impl::nearest_centroid(const Member<Precision>& member, const Clus
     return nearest_centroid;
 }
 
-// TODO(Matthew): Eventually we want to be able to provide an initial cluster set and only do copies on entries that change from one cluster to another after so many iterations.
 template <typename Precision>
-void cluster::k_means(Member<Precision>* members, ui32 member_count, Member<Precision>* centroids, ui32 centroid_count, KMeansOptions options, OUT Cluster<Precision>*& clusters) {
+void cluster::k_means(const Cluster<Precision>* initial_clusters, ui32 cluster_count, ui32 member_count, const KMeansOptions& options, OUT Cluster<Precision>*& clusters, bool front_loaded/* = false*/) {
+    /************
+       Set up buffer of new clusters produced.
+                                     ************/
+
+    clusters = new Cluster<Precision>[cluster_count];
+
     /************
        Set up metadata for k-means algorithm.
                                     ************/
 
-    Member<Precision>* new_centroids = new Member<Precision>[centroid_count];
-    ui32* member_centroid_map = new ui32[member_count];
-    ui32* members_count_in_centroid = new ui32[member_count];
+    impl::MemberClusterMetadata* member_cluster_metadata = new impl::MemberClusterMetadata[member_count];
+    bool* cluster_modified_in_iteration = new bool[cluster_count](false);
 
     /************
        Perform k-means algorithm.
@@ -133,36 +137,77 @@ void cluster::k_means(Member<Precision>* members, ui32 member_count, Member<Prec
         // Complete if max iterations has been reached.
         if (++iterations > options.max_iterations) break;
 
-        // Zero pertinent data.
+        // Each iteration starts at zero changes!
         changes_in_iteration = 0;
-        std::fill_n(new_centroids, centroid_count, Member<Precision>{0.0, 0.0, 0.0});
-        std::fill_n(members_count_in_centroid, member_count, 0);
+        std::fill_n(cluster_modified_in_iteration, cluster_count, false);
 
+        //
         // Iterate each member of the population on which the clusters are being built.
         // For each member, determine which centroid it is nearest to and add its position
         // to a new centroid which will then take its position as the average position of
         // the associated members.
-        for (ui32 member_idx = 0; member_idx < member_count; ++member_idx) {
-            ui32 nearest_centroid_idx = impl::nearest_centroid(members[member_idx], centroids, centroid_count);
+        //
 
-            if (member_centroid_map[member_idx] != nearest_centroid_idx) {
-                ++changes_in_iteration;
-                member_centroid_map[member_idx] = nearest_centroid_idx;
+        ui32 global_member_idx = 0;
+        // Iterate each initial cluster and then iterate members held by that cluster.
+        for (ui32 initial_cluster_idx = 0; initial_cluster_idx < cluster_count; ++initial_cluster_idx) {
+            const Cluster<Precision>& cluster = initial_clusters[initial_cluster_idx];
+            for (ui32 in_cluster_member_idx = 0; in_cluster_member_idx < initial_clusters[initial_cluster_idx].member_count; ++in_cluster_member_idx) {
+                ui32 nearest_centroid_idx = impl::nearest_centroid(cluster.members[in_cluster_member_idx], centroids, centroid_count);
+
+                // Set metadata at start of k_means algorithm.
+                if (iterations == 0) {
+                    member_cluster_metadata[global_member_idx].initial_member_idx = in_cluster_member_idx;
+                    member_cluster_metadata[global_member_idx].initial_cluster_idx = initial_cluster_idx;
+                    member_cluster_metadata[global_member_idx].current_cluster_idx = initial_cluster_idx;
+                }
+
+                // If this is the first member to join a cluster this round, then set values,
+                // otherwise add the new values in.
+                if (!cluster_modified_in_iteration[initial_cluster_idx]) {
+                    clusters[nearest_centroid_idx].centroid.x = cluster.members[in_cluster_member_idx].x;
+                    clusters[nearest_centroid_idx].centroid.y = cluster.members[in_cluster_member_idx].y;
+                    clusters[nearest_centroid_idx].centroid.z = cluster.members[in_cluster_member_idx].z;
+
+                    clusters[nearest_centroid_idx].member_count = 0;
+
+                    cluster_modified_in_iteration[initial_cluster_idx] = true;
+                } else {
+                    clusters[nearest_centroid_idx].centroid.x += cluster.members[in_cluster_member_idx].x;
+                    clusters[nearest_centroid_idx].centroid.y += cluster.members[in_cluster_member_idx].y;
+                    clusters[nearest_centroid_idx].centroid.z += cluster.members[in_cluster_member_idx].z;
+
+                    ++(clusters[nearest_centroid_idx].member_count);
+                }
+
+                // If the member has changed cluster membership, then update changes in iteration and its
+                // current cluster index.
+                if (member_cluster_metadata[global_member_idx].current_cluster_idx != nearest_centroid_idx) {
+                    ++changes_in_iteration;
+                    member_cluster_metadata[global_member_idx].current_cluster_idx = nearest_centroid_idx;
+                }
+
+                // Incremement global member index.
+                ++global_member_idx;
             }
 
-            new_centroids[nearest_centroid_idx].x += members[member_idx].x;
-            new_centroids[nearest_centroid_idx].y += members[member_idx].y;
-            new_centroids[nearest_centroid_idx].z += members[member_idx].z;
-
-            ++members_count_in_centroid[nearest_centroid_idx];
+            // Only look at first cluster in buffer if front loaded.
+            if (front_loaded) break;
         }
 
         // Using total members associated with each centroid, calculate the new
         // centroid for that group by taking the average of their positions.
         for (ui32 centroid_idx = 0; centroid_idx < centroid_count; ++centroid_idx) {
-            new_centroids[centroid_idx].x /= members_count_in_centroid[centroid_idx];
-            new_centroids[centroid_idx].y /= members_count_in_centroid[centroid_idx];
-            new_centroids[centroid_idx].z /= members_count_in_centroid[centroid_idx];
+            new_centroids[centroid_idx].x /= members_count_in_cluster[centroid_idx];
+            new_centroids[centroid_idx].y /= members_count_in_cluster[centroid_idx];
+            new_centroids[centroid_idx].z /= members_count_in_cluster[centroid_idx];
         }
     } while (changes_in_iteration > options.acceptable_changes_per_iteration);
+
+    /************
+       Clean-up.
+       ************/
+
+    delete[] member_cluster_metadata;
+    delete[] cluster_modified_in_iteration;
 }
