@@ -211,7 +211,7 @@ void cluster::k_means(const Cluster<Precision>* initial_clusters, ui32 cluster_c
     // TODO(Matthew): Speed up by minimising copies by considering non-moving and moving members separately.
     //                    Implementation options include:
     //                        - sorted member buffers (on distance to centroid, e.g.); or,
-    //                        - on-demand sorting, copying in changed members while creating a block of unchanged to likewise copy across.
+    //                        - on-demand sorting, taking ownership of previous member buffers and extracting changed members and placing in others.
 
     // Allocate necessary buffers for clusters.
     for (ui32 cluster_idx = 0; cluster_idx < cluster_count; ++cluster_idx) {
