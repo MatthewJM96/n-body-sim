@@ -153,7 +153,7 @@ void cluster::k_means(const Cluster<Precision>* initial_clusters, ui32 cluster_c
         for (ui32 initial_cluster_idx = 0; initial_cluster_idx < cluster_count; ++initial_cluster_idx) {
             const Cluster<Precision>& cluster = initial_clusters[initial_cluster_idx];
             for (ui32 in_cluster_member_idx = 0; in_cluster_member_idx < initial_clusters[initial_cluster_idx].member_count; ++in_cluster_member_idx) {
-                ui32 nearest_centroid_idx = impl::nearest_centroid(cluster.members[in_cluster_member_idx], centroids, centroid_count);
+                ui32 nearest_centroid_idx = impl::nearest_centroid(cluster.members[in_cluster_member_idx], initial_clusters, cluster_count);
 
                 // Set metadata at start of k_means algorithm.
                 if (iterations == 0) {
