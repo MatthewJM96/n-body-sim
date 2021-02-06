@@ -26,7 +26,7 @@ namespace cluster {
     };
 
     template <typename Precision>
-    Precision member_distance_2(Member<Precision> lhs, Member<Precision> rhs);
+    Precision member_distance_2(const Member<Precision>& lhs, const Member<Precision>& rhs);
 
     template <typename Precision>
     void kpp(Member<Precision>* members, ui32 member_count, Member<Precision>* centroids, ui32 centroid_count);
@@ -36,7 +36,7 @@ namespace cluster {
 
     namespace impl {
         template <typename Precision>
-        ui32 nearest_centroid(const Member<Precision>& member, Member<Precision>* centroids, ui32 centroid_count);
+        ui32 nearest_centroid(const Member<Precision>& member, const Cluster<Precision>* clusters, ui32 cluster_count);
     };
 };
 

@@ -3,7 +3,7 @@
 #include <random>
 
 template <typename Precision>
-Precision cluster::member_distance_2(Member<Precision> lhs, Member<Precision> rhs) {
+Precision cluster::member_distance_2(const Member<Precision>& lhs, const Member<Precision>& rhs) {
     return (lhs.x - rhs.x) * (lhs.x - rhs.x)
             + (lhs.y - rhs.y) * (lhs.y - rhs.y)
             + (lhs.z - rhs.z) * (lhs.z - rhs.z);
@@ -96,15 +96,15 @@ void cluster::kpp(Member<Precision>* members, ui32 member_count, Member<Precisio
 }
 
 template <typename Precision>
-ui32 cluster::impl::nearest_centroid(const Member<Precision>& member, Member<Precision>* centroids, ui32 centroid_count) {
+ui32 cluster::impl::nearest_centroid(const Member<Precision>& member, const Cluster<Precision>* clusters, ui32 cluster_count) {
     ui32      nearest_centroid = 0;
     Precision nearest_centroid_distance_2 = std::numeric_limits<Precision>::max();
 
-    for (ui32 centroid_idx = 0; centroid_idx < centroid_count; ++centroid_idx) {
-        Precision centroid_distance_2 = member_distance_2(member, centroids[centroid_idx]);
+    for (ui32 cluster_idx = 0; cluster_idx < cluster_count; ++cluster_idx) {
+        Precision centroid_distance_2 = member_distance_2(member, clusters[cluster_idx].centroid);
 
         if (centroid_distance_2 < nearest_centroid_distance_2) {
-            nearest_centroid = centroid_idx;
+            nearest_centroid = cluster_idx;
             nearest_centroid_distance_2 = centroid_distance_2;
         }
     }
