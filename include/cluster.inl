@@ -96,16 +96,30 @@ void cluster::kpp(Member<Precision>* members, ui32 member_count, Member<Precisio
 }
 
 template <typename Precision>
-ui32 cluster::impl::nearest_centroid(const Member<Precision>& member, const Cluster<Precision>* clusters, ui32 cluster_count) {
-    ui32      nearest_centroid = 0;
-    Precision nearest_centroid_distance_2 = std::numeric_limits<Precision>::max();
+cluster::impl::NearestCentroid<Precision> cluster::impl::nearest_centroid(const Member<Precision>& member, const MemberClusterMetadata<Precision>& member_metadata, const Cluster<Precision>* clusters, ui32 cluster_count) {
+    // Optimisation by early back out of search if previous nearest centroid has got closer - in which case it is guaranteed to still be the nearest centroid.
+    //     This is based on the paper "An Efficient Enhanced k-means Clustering Algorithm" by Fahim A.M., Salem A.M., Torkey F.A., and Ramadan M.A.
+    Precision new_distance_2_to_current_cluster = member_distance_2(member, clusters[member_metadata.current_cluster_idx].centroid);
+    if (new_distance_2_to_current_cluster < member_metadata.distance_2_to_current_cluster) {
+        return NearestCentroid<Precision>{
+            member_metadata.current_cluster_idx,
+            new_distance_2_to_current_cluster
+        }
+    }
+
+    NearestCentroid<Precision> nearest_centroid = {
+        member_metadata.current_cluster_idx,
+        new_distance_2_to_current_cluster
+    };
 
     for (ui32 cluster_idx = 0; cluster_idx < cluster_count; ++cluster_idx) {
+        if (cluster_idx == member_metadata.current_cluster_idx) continue;
+
         Precision centroid_distance_2 = member_distance_2(member, clusters[cluster_idx].centroid);
 
-        if (centroid_distance_2 < nearest_centroid_distance_2) {
-            nearest_centroid = cluster_idx;
-            nearest_centroid_distance_2 = centroid_distance_2;
+        if (centroid_distance_2 < nearest_centroid.distance) {
+            nearest_centroid.idx = cluster_idx;
+            nearest_centroid.distance = centroid_distance_2;
         }
     }
 
@@ -124,7 +138,7 @@ void cluster::k_means(const Cluster<Precision>* initial_clusters, ui32 cluster_c
        Set up metadata for k-means algorithm.
                                     ************/
 
-    impl::MemberClusterMetadata* member_cluster_metadata = new impl::MemberClusterMetadata[member_count];
+    impl::MemberClusterMetadata<Precision>* member_cluster_metadata = new impl::MemberClusterMetadata<Precision>[member_count];
     bool* cluster_modified_in_iteration = new bool[cluster_count](false);
 
     /************
@@ -151,41 +165,55 @@ void cluster::k_means(const Cluster<Precision>* initial_clusters, ui32 cluster_c
         ui32 global_member_idx = 0;
         // Iterate each initial cluster and then iterate members held by that cluster.
         for (ui32 initial_cluster_idx = 0; initial_cluster_idx < cluster_count; ++initial_cluster_idx) {
+            // Get handle on cluster we're looking at.
             const Cluster<Precision>& cluster = initial_clusters[initial_cluster_idx];
-            for (ui32 in_cluster_member_idx = 0; in_cluster_member_idx < initial_clusters[initial_cluster_idx].member_count; ++in_cluster_member_idx) {
-                ui32 nearest_centroid_idx = impl::nearest_centroid(cluster.members[in_cluster_member_idx], initial_clusters, cluster_count);
 
+            for (ui32 in_cluster_member_idx = 0; in_cluster_member_idx < initial_clusters[initial_cluster_idx].member_count; ++in_cluster_member_idx) {
                 // Set metadata at start of k_means algorithm.
                 if (iterations == 0) {
                     member_cluster_metadata[global_member_idx].initial_member_idx = in_cluster_member_idx;
                     member_cluster_metadata[global_member_idx].initial_cluster_idx = initial_cluster_idx;
                     member_cluster_metadata[global_member_idx].current_cluster_idx = initial_cluster_idx;
+
+                    // If we're front loaded, that means we're starting from no known clusters so just set distance to minimum possible.
+                    //     This will result in the right behaviour when we search for the nearest centroid, with calculation
+                    //     performed the first time over all centroids.
+                    if (front_loaded) {
+                        member_cluster_metadata[global_member_idx].distance_2_to_current_cluster = std::numeric_limits<Precision>::min();
+                    } else {
+                        member_cluster_metadata[global_member_idx].distance_2_to_current_cluster = member_distance_2(cluster.members[in_cluster_member_idx], cluster.centroid);
+                    }
                 }
+
+                impl::NearestCentroid<Precision> nearest_centroid = impl::nearest_centroid(cluster.members[in_cluster_member_idx], member_cluster_metadata[global_member_idx], initial_clusters, cluster_count);
 
                 // If this is the first member to join a cluster this round, then set values,
                 // otherwise add the new values in.
                 if (!cluster_modified_in_iteration[initial_cluster_idx]) {
-                    clusters[nearest_centroid_idx].centroid.x = cluster.members[in_cluster_member_idx].x;
-                    clusters[nearest_centroid_idx].centroid.y = cluster.members[in_cluster_member_idx].y;
-                    clusters[nearest_centroid_idx].centroid.z = cluster.members[in_cluster_member_idx].z;
+                    clusters[nearest_centroid.idx].centroid.x = cluster.members[in_cluster_member_idx].x;
+                    clusters[nearest_centroid.idx].centroid.y = cluster.members[in_cluster_member_idx].y;
+                    clusters[nearest_centroid.idx].centroid.z = cluster.members[in_cluster_member_idx].z;
 
-                    clusters[nearest_centroid_idx].member_count = 0;
+                    clusters[nearest_centroid.idx].member_count = 0;
 
                     cluster_modified_in_iteration[initial_cluster_idx] = true;
                 } else {
-                    clusters[nearest_centroid_idx].centroid.x += cluster.members[in_cluster_member_idx].x;
-                    clusters[nearest_centroid_idx].centroid.y += cluster.members[in_cluster_member_idx].y;
-                    clusters[nearest_centroid_idx].centroid.z += cluster.members[in_cluster_member_idx].z;
+                    clusters[nearest_centroid.idx].centroid.x += cluster.members[in_cluster_member_idx].x;
+                    clusters[nearest_centroid.idx].centroid.y += cluster.members[in_cluster_member_idx].y;
+                    clusters[nearest_centroid.idx].centroid.z += cluster.members[in_cluster_member_idx].z;
 
-                    ++(clusters[nearest_centroid_idx].member_count);
+                    ++(clusters[nearest_centroid.idx].member_count);
                 }
 
                 // If the member has changed cluster membership, then update changes in iteration and its
                 // current cluster index.
-                if (member_cluster_metadata[global_member_idx].current_cluster_idx != nearest_centroid_idx) {
+                if (member_cluster_metadata[global_member_idx].current_cluster_idx != nearest_centroid.idx) {
                     ++changes_in_iteration;
-                    member_cluster_metadata[global_member_idx].current_cluster_idx = nearest_centroid_idx;
+                    member_cluster_metadata[global_member_idx].current_cluster_idx = nearest_centroid.idx;
                 }
+
+                // No matter what, the distance to the centroid has very likely changed, so we should update it!
+                member_cluster_metadata[global_member_idx].distance_2_to_current_cluster = nearest_centroid.distance;
 
                 // Incremement global member index.
                 ++global_member_idx;

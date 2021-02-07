@@ -35,14 +35,23 @@ namespace cluster {
     void k_means(const Cluster<Precision>* initial_clusters, ui32 initial_cluster_count, const KMeansOptions& options, OUT Cluster<Precision>*& clusters, bool front_loaded = false);
 
     namespace impl {
-        template <typename Precision>
-        ui32 nearest_centroid(const Member<Precision>& member, const Cluster<Precision>* clusters, ui32 cluster_count);
-
+        template <typename Precision, typename = typename std::enable_if<std::is_floating_point<Precision>::value>::type>
         struct MemberClusterMetadata {
             ui32 initial_cluster_idx;
             ui32 initial_member_idx;
             ui32 current_cluster_idx;
+
+            Precision distance_2_to_current_cluster;
         };
+
+        template <typename Precision, typename = typename std::enable_if<std::is_floating_point<Precision>::value>::type>
+        struct NearestCentroid {
+            ui32 idx;
+            Precision distance;
+        };
+
+        template <typename Precision>
+        NearestCentroid<Precision> nearest_centroid(const Member<Precision>& member, const MemberClusterMetadata<Precision>& member_metadata, const Cluster<Precision>* clusters, ui32 cluster_count);
     };
 };
 
