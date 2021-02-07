@@ -36,18 +36,17 @@ namespace cluster {
 
     namespace impl {
         template <typename Precision, typename = typename std::enable_if<std::is_floating_point<Precision>::value>::type>
-        struct MemberClusterMetadata {
-            ui32 initial_cluster_idx;
-            ui32 initial_member_idx;
-            ui32 current_cluster_idx;
-
-            Precision distance_2_to_current_cluster;
-        };
-
-        template <typename Precision, typename = typename std::enable_if<std::is_floating_point<Precision>::value>::type>
         struct NearestCentroid {
             ui32 idx;
             Precision distance;
+        };
+
+        template <typename Precision, typename = typename std::enable_if<std::is_floating_point<Precision>::value>::type>
+        struct MemberClusterMetadata {
+            ui32 initial_cluster_idx;
+            ui32 initial_member_idx;
+
+            NearestCentroid<Precision> current_cluster;
         };
 
         template <typename Precision>
