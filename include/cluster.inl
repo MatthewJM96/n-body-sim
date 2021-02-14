@@ -127,6 +127,79 @@ cluster::impl::NearestCentroid<Precision> cluster::impl::nearest_centroid(const 
 }
 
 template <typename Precision>
+cluster::impl::NearestCentroid<Precision> cluster::impl::nearest_centroid_from_subset(const Member<Precision>& member, const MemberClusterMetadata<Precision>& member_metadata, const Cluster<Precision>* clusters, impl::NearestCentroidList cluster_subset, ui32 cluster_count) {
+    // Optimisation by early back out of search if previous nearest centroid has got closer - in which case it is guaranteed to still be the nearest centroid.
+    //     This is based on the paper "An Efficient Enhanced k-means Clustering Algorithm" by Fahim A.M., Salem A.M., Torkey F.A., and Ramadan M.A.
+    Precision new_distance_2_to_current_cluster = member_distance_2(member, clusters[member_metadata.current_cluster.idx].centroid);
+    if (new_distance_2_to_current_cluster < member_metadata.current_cluster.distance) {
+        return NearestCentroid<Precision>{
+            member_metadata.current_cluster.idx,
+            new_distance_2_to_current_cluster
+        }
+    }
+
+    NearestCentroid<Precision> nearest_centroid = {
+        member_metadata.current_cluster.idx,
+        new_distance_2_to_current_cluster
+    };
+
+    for (ui32 cluster_subset_idx = 0; cluster_subset_idx < cluster_count; ++cluster_subset_idx) {
+        ui32 cluster_idx = cluster_subset.indices[cluster_subset_idx];
+
+        if (cluster_idx == member_metadata.current_cluster.idx) continue;
+
+        Precision centroid_distance_2 = member_distance_2(member, clusters[cluster_idx].centroid);
+
+        if (centroid_distance_2 < nearest_centroid.distance) {
+            nearest_centroid.idx = cluster_idx;
+            nearest_centroid.distance = centroid_distance_2;
+        }
+    }
+
+    return nearest_centroid;
+}
+
+#include <map>
+
+template <typename Precision>
+cluster::impl::NearestCentroidAndList<Precision> cluster::impl::nearest_centroid_and_build_list(const Member<Precision>& member, const MemberClusterMetadata<Precision>& member_metadata, const Cluster<Precision>* clusters, ui32 cluster_count, ui32 subset_count) {
+    // Optimisation by making a subset of centroids to consider for a given particle.
+    //     This is based on the paper "Faster k-means Cluster Estimation" by Khandelwal S., Awekar A.
+    std::multimap<Precision, ui32> centroid_list;
+
+    NearestCentroidAndList<Precision, KPrime> nearest_centroid_and_list = {
+        NearestCentroid<Precision>{
+            member_metadata.current_cluster.idx,
+            member_distance_2(member, clusters[member_metadata.current_cluster.idx].centroid)
+        },
+        NearestCentroidList{
+            new ui32[subset_count]
+        }
+    };
+
+    for (ui32 cluster_idx = 0; cluster_idx < cluster_count; ++cluster_idx) {
+        if (cluster_idx == member_metadata.current_cluster.idx) continue;
+
+        Precision centroid_distance_2 = member_distance_2(member, clusters[cluster_idx].centroid);
+
+        centroid_list.insert(std::make_pair(centroid_distance_2, cluster_idx));
+
+        if (centroid_distance_2 < nearest_centroid_and_list.centroid.distance) {
+            nearest_centroid_and_list.centroid.idx = cluster_idx;
+            nearest_centroid_and_list.centroid.distance = centroid_distance_2;
+        }
+    }
+
+    for (ui32 idx = 0; idx < subset_count; ++idx) {
+        auto it = centroid_list.begin() + idx;
+
+        nearest_centroid_and_list.list.indices[idx] = *it;
+    }
+
+    return nearest_centroid_and_list;
+}
+
+template <typename Precision>
 void cluster::k_means(const Cluster<Precision>* initial_clusters, ui32 cluster_count, ui32 member_count, const KMeansOptions& options, OUT Cluster<Precision>*& clusters) {
     /************
        Set up buffer of new clusters produced.
@@ -137,7 +210,7 @@ void cluster::k_means(const Cluster<Precision>* initial_clusters, ui32 cluster_c
     /************
        Set up metadata for k-means algorithm.
                                     ************/
-
+    
     impl::MemberClusterMetadata<Precision>* member_cluster_metadata = new impl::MemberClusterMetadata<Precision>[member_count];
     bool* cluster_modified_in_iteration = new bool[cluster_count](false);
 
@@ -187,6 +260,11 @@ void cluster::k_means(const Cluster<Precision>* initial_clusters, ui32 cluster_c
                     }
                 }
 
+                if (iterations == 0) {
+                    
+                } else {
+
+                }
                 impl::NearestCentroid<Precision> nearest_centroid = impl::nearest_centroid(cluster.members[in_cluster_member_idx], member_cluster_metadata[global_member_idx], initial_clusters, cluster_count);
 
                 // If this is the first member to join a cluster this round, then set values,

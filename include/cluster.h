@@ -21,10 +21,14 @@ namespace cluster {
     };
 
     struct KMeansOptions {
-        ui32 max_iterations;
-        ui32 acceptable_changes_per_iteration;
-        bool front_loaded;
-        bool no_approaching_centroid_optimisation;
+        ui32 max_iterations                       = 100;
+        ui32 acceptable_changes_per_iteration     = 0;
+        bool front_loaded                         = false;
+        bool no_approaching_centroid_optimisation = false;
+        bool no_centroid_subset_optimisation      = true;
+        struct {
+            ui32 k_prime                          = 30;
+        } centroid_subset;
     };
 
     template <typename Precision>
@@ -51,8 +55,23 @@ namespace cluster {
             NearestCentroid<Precision> current_cluster;
         };
 
+        struct NearestCentroidList {
+            ui32* indices;
+        };
+
+        template <typename Precision>
+        struct NearestCentroidAndList {
+            NearestCentroid<Precision> centroid;
+            NearestCentroidList list;
+        };
+
         template <typename Precision>
         NearestCentroid<Precision> nearest_centroid(const Member<Precision>& member, const MemberClusterMetadata<Precision>& member_metadata, const Cluster<Precision>* clusters, ui32 cluster_count);
+        template <typename Precision>
+        NearestCentroid<Precision> nearest_centroid_from_subset(const Member<Precision>& member, const MemberClusterMetadata<Precision>& member_metadata, const Cluster<Precision>* clusters, NearestCentroidList cluster_subset, ui32 cluster_count);
+
+        template <typename Precision>
+        NearestCentroidAndList<Precision> nearest_centroid_and_build_list(const Member<Precision>& member, const MemberClusterMetadata<Precision>& member_metadata, const Cluster<Precision>* clusters, ui32 cluster_count, ui32 subset_count);
     };
 };
 
