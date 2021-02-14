@@ -127,7 +127,7 @@ cluster::impl::NearestCentroid<Precision> cluster::impl::nearest_centroid(const 
 }
 
 template <typename Precision>
-void cluster::k_means(const Cluster<Precision>* initial_clusters, ui32 cluster_count, ui32 member_count, const KMeansOptions& options, OUT Cluster<Precision>*& clusters, bool front_loaded/* = false*/) {
+void cluster::k_means(const Cluster<Precision>* initial_clusters, ui32 cluster_count, ui32 member_count, const KMeansOptions& options, OUT Cluster<Precision>*& clusters) {
     /************
        Set up buffer of new clusters produced.
                                      ************/
@@ -178,7 +178,7 @@ void cluster::k_means(const Cluster<Precision>* initial_clusters, ui32 cluster_c
                     // If we're front loaded, that means we're starting from no known clusters so just set distance to minimum possible.
                     //     This will result in the right behaviour when we search for the nearest centroid, with calculation
                     //     performed the first time over all centroids.
-                    if (front_loaded) {
+                    if (options.front_loaded) {
                         member_cluster_metadata[global_member_idx].current_cluster.distance = std::numeric_limits<Precision>::min();
                     } else {
                         member_cluster_metadata[global_member_idx].current_cluster.distance = member_distance_2(cluster.members[in_cluster_member_idx], cluster.centroid);
@@ -220,7 +220,7 @@ void cluster::k_means(const Cluster<Precision>* initial_clusters, ui32 cluster_c
             }
 
             // Only look at first cluster in buffer if front loaded.
-            if (front_loaded) break;
+            if (options.front_loaded) break;
         }
 
         // Using total members associated with each centroid, calculate the new

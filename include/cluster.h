@@ -23,6 +23,7 @@ namespace cluster {
     struct KMeansOptions {
         ui32 max_iterations;
         ui32 acceptable_changes_per_iteration;
+        bool front_loaded;
     };
 
     template <typename Precision>
@@ -32,7 +33,7 @@ namespace cluster {
     void kpp(Member<Precision>* members, ui32 member_count, Member<Precision>* centroids, ui32 centroid_count);
 
     template <typename Precision>
-    void k_means(const Cluster<Precision>* initial_clusters, ui32 initial_cluster_count, const KMeansOptions& options, OUT Cluster<Precision>*& clusters, bool front_loaded = false);
+    void k_means(const Cluster<Precision>* initial_clusters, ui32 initial_cluster_count, const KMeansOptions& options, OUT Cluster<Precision>*& clusters);
 
     namespace impl {
         template <typename Precision, typename = typename std::enable_if<std::is_floating_point<Precision>::value>::type>
