@@ -24,6 +24,7 @@ namespace cluster {
         ui32 max_iterations;
         ui32 acceptable_changes_per_iteration;
         bool front_loaded;
+        bool no_approaching_centroid_optimisation;
     };
 
     template <typename Precision>

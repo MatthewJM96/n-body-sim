@@ -178,7 +178,9 @@ void cluster::k_means(const Cluster<Precision>* initial_clusters, ui32 cluster_c
                     // If we're front loaded, that means we're starting from no known clusters so just set distance to minimum possible.
                     //     This will result in the right behaviour when we search for the nearest centroid, with calculation
                     //     performed the first time over all centroids.
-                    if (options.front_loaded) {
+                    // Additionally, if we want to avoid the approaching centroid optimisation, then we should likewise set the distance
+                    // to the minimum possible to force distance calculations for all centroids.
+                    if (options.front_loaded || options.no_approaching_centroid_optimisation) {
                         member_cluster_metadata[global_member_idx].current_cluster.distance = std::numeric_limits<Precision>::min();
                     } else {
                         member_cluster_metadata[global_member_idx].current_cluster.distance = member_distance_2(cluster.members[in_cluster_member_idx], cluster.centroid);
