@@ -215,6 +215,8 @@ void cluster::k_means(const Cluster<Precision>* initial_clusters, ui32 cluster_c
                                     ************/
     
     impl::MemberClusterMetadata<Precision>* member_cluster_metadata = new impl::MemberClusterMetadata<Precision>[member_count];
+    // TODO(Matthew): Do we template parameterise the centroid_subset_optimisation flag to reduce memory usage if it is disabled?
+    [[maybe_unused]] impl::NearestCentroidList* nearest_centroids_lists = new impl::NearestCentroidList[member_count];
     bool* cluster_modified_in_iteration = new bool[cluster_count](false);
 
     /************
@@ -264,11 +266,10 @@ void cluster::k_means(const Cluster<Precision>* initial_clusters, ui32 cluster_c
                 }
 
                 impl::NearestCentroid<Precision> nearest_centroid;
-                [[maybe_unused]] impl::NearestCentroidList nearest_centroids_list;
-                if (options.no_centroid_subset_optimisation) {
+                if (options.no_centroid_subset_optimisation || iterations == 0) {
                     nearest_centroid = impl::nearest_centroid(cluster.members[in_cluster_member_idx], member_cluster_metadata[global_member_idx], clusters, cluster_count);
                 } else {
-                    if (iterations == 0) {
+                    if (iterations == 1) {
                         impl::NearestCentroidAndList<Precision> nearest_centroid_and_list = impl::nearest_centroid_and_build_list(
                             cluster.members[in_cluster_member_idx],
                             member_cluster_metadata[global_member_idx],
@@ -277,10 +278,16 @@ void cluster::k_means(const Cluster<Precision>* initial_clusters, ui32 cluster_c
                             options.centroid_subset.k_prime
                         );
 
-                        nearest_centroid       = nearest_centroid_and_list.centroid;
-                        nearest_centroids_list = nearest_centroid_and_list.list;
+                        nearest_centroid = nearest_centroid_and_list.centroid;
+                        nearest_centroids_lists[global_member_idx] = nearest_centroid_and_list.list;
                     } else {
-                        nearest_centroid = impl::nearest_centroid_from_subset(cluster.members[in_cluster_member_idx], member_cluster_metadata[global_member_idx], clusters, cluster_count);
+                        nearest_centroid = impl::nearest_centroid_from_subset(
+                            cluster.members[in_cluster_member_idx],
+                            member_cluster_metadata[global_member_idx],
+                            clusters,
+                            nearest_centroids_lists[global_member_idx],
+                            cluster_count
+                        );
                     }
                 }
 
