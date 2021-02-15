@@ -293,7 +293,13 @@ void cluster::k_means(const Cluster<Precision>* initial_clusters, ui32 cluster_c
                 }
 
                 // No matter what, the distance to the centroid has very likely changed, so we should update it!
-                member_cluster_metadata[global_member_idx].current_cluster.distance = nearest_centroid.distance;
+                // However, if we want to avoid the approaching centroid optimisation, then we should set the
+                // distance to the minimum possible to force distance calculations for all centroids.
+                if (options.no_approaching_centroid_optimisation) {
+                    member_cluster_metadata[global_member_idx].current_cluster.distance = std::numeric_limits<Precision>::min();
+                } else {
+                    member_cluster_metadata[global_member_idx].current_cluster.distance = nearest_centroid.distance;
+                }
 
                 // Incremement global member index.
                 ++global_member_idx;
