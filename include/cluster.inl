@@ -167,7 +167,7 @@ cluster::impl::NearestCentroidAndList<Precision> cluster::impl::nearest_centroid
     //     This is based on the paper "Faster k-means Cluster Estimation" by Khandelwal S., Awekar A.
     std::multimap<Precision, ui32> centroid_list;
 
-    NearestCentroidAndList<Precision, KPrime> nearest_centroid_and_list = {
+    NearestCentroidAndList<Precision> nearest_centroid_and_list = {
         NearestCentroid<Precision>{
             member_metadata.current_cluster.idx,
             member_distance_2(member, clusters[member_metadata.current_cluster.idx].centroid)
