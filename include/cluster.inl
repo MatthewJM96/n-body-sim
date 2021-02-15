@@ -104,7 +104,7 @@ cluster::impl::NearestCentroid<Precision> cluster::impl::nearest_centroid(const 
         return NearestCentroid<Precision>{
             member_metadata.current_cluster.idx,
             new_distance_2_to_current_cluster
-        }
+        };
     }
 
     NearestCentroid<Precision> nearest_centroid = {
