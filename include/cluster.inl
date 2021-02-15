@@ -199,6 +199,8 @@ cluster::impl::NearestCentroidAndList<Precision> cluster::impl::nearest_centroid
     return nearest_centroid_and_list;
 }
 
+#include <cstring>
+
 template <typename Precision>
 void cluster::k_means(const Cluster<Precision>* initial_clusters, ui32 cluster_count, ui32 member_count, const KMeansOptions& options, OUT Cluster<Precision>*& clusters) {
     /************
@@ -206,6 +208,7 @@ void cluster::k_means(const Cluster<Precision>* initial_clusters, ui32 cluster_c
                                      ************/
 
     clusters = new Cluster<Precision>[cluster_count];
+    std::memcpy(clusters, initial_clusters, sizeof(Cluster<Precision>) * cluster_count);
 
     /************
        Set up metadata for k-means algorithm.
@@ -239,7 +242,7 @@ void cluster::k_means(const Cluster<Precision>* initial_clusters, ui32 cluster_c
         // Iterate each initial cluster and then iterate members held by that cluster.
         for (ui32 initial_cluster_idx = 0; initial_cluster_idx < cluster_count; ++initial_cluster_idx) {
             // Get handle on cluster we're looking at.
-            const Cluster<Precision>& cluster = initial_clusters[initial_cluster_idx];
+            const Cluster<Precision>& cluster = clusters[initial_cluster_idx];
 
             for (ui32 in_cluster_member_idx = 0; in_cluster_member_idx < initial_clusters[initial_cluster_idx].member_count; ++in_cluster_member_idx) {
                 // Set metadata at start of k_means algorithm.
@@ -260,12 +263,26 @@ void cluster::k_means(const Cluster<Precision>* initial_clusters, ui32 cluster_c
                     }
                 }
 
-                if (iterations == 0) {
-                    
+                impl::NearestCentroid<Precision> nearest_centroid;
+                [[maybe_unused]] impl::NearestCentroidList nearest_centroids_list;
+                if (options.no_centroid_subset_optimisation) {
+                    nearest_centroid = impl::nearest_centroid(cluster.members[in_cluster_member_idx], member_cluster_metadata[global_member_idx], clusters, cluster_count);
                 } else {
+                    if (iterations == 0) {
+                        impl::NearestCentroidAndList<Precision> nearest_centroid_and_list = impl::nearest_centroid_and_build_list(
+                            cluster.members[in_cluster_member_idx],
+                            member_cluster_metadata[global_member_idx],
+                            clusters,
+                            cluster_count,
+                            options.centroid_subset.k_prime
+                        );
 
+                        nearest_centroid       = nearest_centroid_and_list.centroid;
+                        nearest_centroids_list = nearest_centroid_and_list.list;
+                    } else {
+                        nearest_centroid = impl::nearest_centroid_from_subset(cluster.members[in_cluster_member_idx], member_cluster_metadata[global_member_idx], clusters, cluster_count);
+                    }
                 }
-                impl::NearestCentroid<Precision> nearest_centroid = impl::nearest_centroid(cluster.members[in_cluster_member_idx], member_cluster_metadata[global_member_idx], initial_clusters, cluster_count);
 
                 // If this is the first member to join a cluster this round, then set values,
                 // otherwise add the new values in.
