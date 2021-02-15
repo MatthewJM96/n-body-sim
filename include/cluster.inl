@@ -335,7 +335,7 @@ void cluster::k_means(const Cluster<Precision>* initial_clusters, ui32 cluster_c
     // For each member, copy it into the appropriate cluster buffer.
     ui32* member_cursors = new ui32[cluster_count](0);
     for (ui32 member_idx = 0; member_idx < member_count; ++member_idx) {
-        ui32& new_cluster_offset = member_cursors[member_cluster_metadata[member_idx].current_cluster_idx];
+        ui32 new_cluster_offset = member_cursors[member_cluster_metadata[member_idx].current_cluster_idx]++;
 
         const Cluster<Precision>& old_cluster = initial_clusters[member_cluster_metadata[member_idx].initial_cluster_idx];
         const Cluster<Precision>& new_cluster = clusters[member_cluster_metadata[member_idx].current_cluster_idx];
