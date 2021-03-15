@@ -25,7 +25,7 @@ template <typename Precision, typename = typename std::enable_if<std::is_floatin
 class CubeParticleGenerator {
 public:
     /**
-     * \brief Generates a distribution of particles with a target particle count.
+     * \brief Generates a distribution of particles that puts them into a cube layout with equal distance along each axis.
      *
      * \param particles The buffer of particles to fill up to the target particle count.
      * \param target_particle_count The target particle count for the distribution generation, this will not be exceeded.
