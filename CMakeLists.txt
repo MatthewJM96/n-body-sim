@@ -92,6 +92,8 @@ endif()
 
 set(NBS_Requirements
     glm/0.9.9.8
+    imgui/1.89.4
+    implot/0.14
 )
 
 
@@ -108,6 +110,8 @@ conan_cmake_install(PATH_OR_REFERENCE .
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_BINARY_DIR}")
 
 find_package(glm REQUIRED)
+find_package(imgui REQUIRED)
+find_package(implot REQUIRED)
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_compile_definitions(DEBUG=1)
@@ -125,6 +129,8 @@ target_precompile_headers(NBS
 
 set(NBS_Include_Dirs
     ${glm_INCLUDE_DIRS}
+    ${imgui_INCLUDE_DIRS}
+    ${implot_INCLUDE_DIRS}
 )
 
 # TODO(Matthew): remove the "${PROJECT_SOURCE_DIR}" line and properly build
@@ -216,6 +222,8 @@ target_include_directories(NBS
 #         )
 #     endif()
 # endif()
+
+target_link_libraries(NBS imgui::imgui implot::implot)
 
 if(NBS_ENABLE_GPERF_PROFILER)
     target_link_libraries(NBS profiler)
