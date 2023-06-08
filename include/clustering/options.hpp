@@ -11,8 +11,8 @@ namespace nbs {
             ui32 max_iterations                    = 100;
             ui32 acceptable_changes_per_iteration  = 0;
             bool front_loaded                      = false;
-            bool approaching_centroid_optimisation = false;
-            bool centroid_subset_optimisation      = true;
+            bool approaching_centroid_optimisation = true;
+            bool centroid_subset_optimisation      = false;
 
             struct {
                 ui32 k_prime = 30;
