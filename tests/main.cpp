@@ -40,6 +40,20 @@ void do_a_cluster_job() {
                   << clusters[i].centroid.position.y << " - "
                   << clusters[i].centroid.position.z << std::endl;
     }
+
+    // Allocate buffers used for K-means.
+    cluster::KMeansBuffers<options> buffers;
+    cluster::allocate_kmeans_buffers<options>(buffers);
+
+    // Do k_means.
+    cluster::k_means(particles, clusters, clusters + ClusterCount, buffers);
+
+    // Quick check.
+    for (size_t i = 0; i < ClusterCount; ++i) {
+        std::cout << clusters[i + ClusterCount].centroid.position.x << " - "
+                  << clusters[i + ClusterCount].centroid.position.y << " - "
+                  << clusters[i + ClusterCount].centroid.position.z << std::endl;
+    }
 }
 
 int main() {
