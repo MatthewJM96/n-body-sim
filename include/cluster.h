@@ -15,37 +15,20 @@ namespace nbs {
         };
 
         struct KMeansOptions {
-            ui32 particle_count                       = 1000;
-            ui32 cluster_count                        = 10;
-            ui32 max_iterations                       = 100;
-            ui32 acceptable_changes_per_iteration     = 0;
-            bool front_loaded                         = false;
-            bool no_approaching_centroid_optimisation = false;
-            bool no_centroid_subset_optimisation      = true;
+            ui32 particle_count                    = 1000;
+            ui32 cluster_count                     = 10;
+            ui32 max_iterations                    = 100;
+            ui32 acceptable_changes_per_iteration  = 0;
+            bool front_loaded                      = false;
+            bool approaching_centroid_optimisation = false;
+            bool centroid_subset_optimisation      = true;
 
             struct {
                 ui32 k_prime = 30;
             } centroid_subset;
         };
 
-        template <Particle ParticleType>
-        NBS_PRECISION
-        particle_distance_2(const ParticleType& lhs, const ParticleType& rhs);
-
-        template <Particle ParticleType>
-        void
-        kpp(ParticleType* particles,
-            ui32          particle_count,
-            ParticleType* centroids,
-            ui32          centroid_count);
-
-        template <Particle ParticleType, KMeansOptions Options>
-        void k_means(
-            IN CALLER_DELETE const Cluster<ParticleType>* initial_clusters,
-            OUT CALLER_DELETE Cluster<ParticleType>* final_clusters
-        );
-
-        namespace impl {
+        namespace detail {
             struct NearestCentroid {
                 ui32          idx;
                 NBS_PRECISION distance;
@@ -66,7 +49,47 @@ namespace nbs {
                 NearestCentroid     centroid;
                 NearestCentroidList list;
             };
+        }  // namespace detail
 
+        template <KMeansOptions, typename = void>
+        struct KMeansBuffers;
+
+        template <KMeansOptions Options>
+        struct KMeansBuffers<
+            Options,
+            typename std::enable_if_t<!Options.centroid_subset_optimisation>> {
+            detail::ParticleClusterMetadata* particle_metadata;
+            bool*                            cluster_modified_in_iteration;
+        };
+
+        template <KMeansOptions Options>
+        struct KMeansBuffers<
+            Options,
+            typename std::enable_if_t<Options.centroid_subset_optimisation>> {
+            detail::ParticleClusterMetadata* particle_metadata;
+            bool*                            cluster_modified_in_iteration;
+            detail::NearestCentroidList*     nearest_centroid_lists;
+        };
+
+        template <Particle ParticleType>
+        NBS_PRECISION
+        particle_distance_2(const ParticleType& lhs, const ParticleType& rhs);
+
+        template <Particle ParticleType>
+        void
+        kpp(ParticleType* particles,
+            ui32          particle_count,
+            ParticleType* centroids,
+            ui32          centroid_count);
+
+        template <Particle ParticleType, KMeansOptions Options>
+        void k_means(
+            IN CALLER_DELETE const Cluster<ParticleType>* initial_clusters,
+            OUT CALLER_DELETE Cluster<ParticleType>* final_clusters,
+            IN OUT CALLER_DELETE KMeansBuffers<Options> buffers
+        );
+
+        namespace detail {
             template <Particle ParticleType>
             NearestCentroid nearest_centroid(
                 const ParticleType&            particle,
@@ -91,7 +114,7 @@ namespace nbs {
                 ui32                           cluster_count,
                 ui32                           subset_count
             );
-        };  // namespace impl
+        };  // namespace detail
     }       // namespace cluster
 }  // namespace nbs
 

@@ -111,7 +111,7 @@ void nbs::cluster::kpp(
 }
 
 template <nbs::Particle ParticleType>
-nbs::cluster::impl::NearestCentroid nbs::cluster::impl::nearest_centroid(
+nbs::cluster::detail::NearestCentroid nbs::cluster::detail::nearest_centroid(
     const ParticleType&            particle,
     const ParticleClusterMetadata& particle_metadata,
     const Cluster<ParticleType>*   clusters,
@@ -149,11 +149,12 @@ nbs::cluster::impl::NearestCentroid nbs::cluster::impl::nearest_centroid(
 }
 
 template <nbs::Particle ParticleType>
-nbs::cluster::impl::NearestCentroid nbs::cluster::impl::nearest_centroid_from_subset(
+nbs::cluster::detail::NearestCentroid
+nbs::cluster::detail::nearest_centroid_from_subset(
     const ParticleType&            particle,
     const ParticleClusterMetadata& particle_metadata,
     const Cluster<ParticleType>*   clusters,
-    impl::NearestCentroidList      cluster_subset,
+    detail::NearestCentroidList    cluster_subset,
     ui32                           cluster_count
 ) {
     // Optimisation by early back out of search if previous nearest centroid has got
@@ -194,8 +195,8 @@ nbs::cluster::impl::NearestCentroid nbs::cluster::impl::nearest_centroid_from_su
 #include <map>
 
 template <nbs::Particle ParticleType>
-nbs::cluster::impl::NearestCentroidAndList
-nbs::cluster::impl::nearest_centroid_and_build_list(
+nbs::cluster::detail::NearestCentroidAndList
+nbs::cluster::detail::nearest_centroid_and_build_list(
     const ParticleType&            particle,
     const ParticleClusterMetadata& particle_metadata,
     const Cluster<ParticleType>*   clusters,
@@ -243,20 +244,26 @@ nbs::cluster::impl::nearest_centroid_and_build_list(
 template <nbs::Particle ParticleType, nbs::cluster::KMeansOptions Options>
 void nbs::cluster::k_means(
     IN CALLER_DELETE const Cluster<ParticleType>* initial_clusters,
-    OUT CALLER_DELETE Cluster<ParticleType>* clusters
+    OUT CALLER_DELETE Cluster<ParticleType>* clusters,
+    IN OUT CALLER_DELETE KMeansBuffers<Options> buffers
 ) {
     /************
        Set up metadata for k-means algorithm.
                                     ************/
 
-    std::array<impl::ParticleClusterMetadata, Options.particle_count>
-        particle_cluster_metadata = {};
-    // TODO(Matthew): Do we template parameterise the centroid_subset_optimisation flag
-    // to reduce memory usage if it is disabled?
-    std::array<impl::NearestCentroidList, Options.particle_count>
-        nearest_centroids_lists = {};
-
-    std::array<bool, Options.cluster_count> cluster_modified_in_iteration = {};
+    std::fill_n(
+        buffers.particle_metadata,
+        Options.particle_count,
+        detail::ParticleClusterMetadata{}
+    );
+    std::fill_n(buffers.cluster_modified_in_iteration, Options.cluster_count, false);
+    if constexpr (Options.centroid_subset_optimisation) {
+        std::fill_n(
+            buffers.nearest_centroid_lists,
+            Options.particle_count,
+            detail::NearestCentroidList{}
+        );
+    }
 
     /************
        Perform k-means algorithm.
@@ -270,7 +277,9 @@ void nbs::cluster::k_means(
 
         // Each iteration starts at zero changes!
         changes_in_iteration = 0;
-        std::fill_n(cluster_modified_in_iteration, Options.cluster_count, false);
+        std::fill_n(
+            buffers.cluster_modified_in_iteration, Options.cluster_count, false
+        );
 
         //
         // Iterate each particle of the population on which the clusters are being
@@ -294,11 +303,14 @@ void nbs::cluster::k_means(
             {
                 // Set metadata at start of k_means algorithm.
                 if (iterations == 0) {
-                    particle_cluster_metadata[global_particle_idx].initial_particle_idx
+                    buffers.particle_cluster_metadata[global_particle_idx]
+                        .initial_particle_idx
                         = in_cluster_particle_idx;
-                    particle_cluster_metadata[global_particle_idx].initial_cluster_idx
+                    buffers.particle_cluster_metadata[global_particle_idx]
+                        .initial_cluster_idx
                         = initial_cluster_idx;
-                    particle_cluster_metadata[global_particle_idx].current_cluster.idx
+                    buffers.particle_cluster_metadata[global_particle_idx]
+                        .current_cluster.idx
                         = initial_cluster_idx;
 
                     // If we're front loaded, that means we're starting from no known
@@ -311,13 +323,13 @@ void nbs::cluster::k_means(
                     // minimum possible to force distance calculations for all
                     // centroids.
                     if (Options.front_loaded
-                        || Options.no_approaching_centroid_optimisation)
+                        || !Options.approaching_centroid_optimisation)
                     {
-                        particle_cluster_metadata[global_particle_idx]
+                        buffers.particle_cluster_metadata[global_particle_idx]
                             .current_cluster.distance
                             = std::numeric_limits<NBS_PRECISION>::min();
                     } else {
-                        particle_cluster_metadata[global_particle_idx]
+                        buffers.particle_cluster_metadata[global_particle_idx]
                             .current_cluster.distance
                             = particle_distance_2(
                                 cluster.particles[in_cluster_particle_idx],
@@ -326,34 +338,34 @@ void nbs::cluster::k_means(
                     }
                 }
 
-                impl::NearestCentroid nearest_centroid;
-                if (Options.no_centroid_subset_optimisation || iterations == 0) {
-                    nearest_centroid = impl::nearest_centroid(
+                detail::NearestCentroid nearest_centroid;
+                if (!Options.centroid_subset_optimisation || iterations == 0) {
+                    nearest_centroid = detail::nearest_centroid(
                         cluster.particles[in_cluster_particle_idx],
-                        particle_cluster_metadata[global_particle_idx],
+                        buffers.particle_cluster_metadata[global_particle_idx],
                         clusters,
                         Options.cluster_count
                     );
                 } else {
                     if (iterations == 1) {
-                        impl::NearestCentroidAndList nearest_centroid_and_list
-                            = impl::nearest_centroid_and_build_list(
+                        detail::NearestCentroidAndList nearest_centroid_and_list
+                            = detail::nearest_centroid_and_build_list(
                                 cluster.particles[in_cluster_particle_idx],
-                                particle_cluster_metadata[global_particle_idx],
+                                buffers.particle_cluster_metadata[global_particle_idx],
                                 clusters,
                                 Options.cluster_count,
                                 Options.centroid_subset.k_prime
                             );
 
                         nearest_centroid = nearest_centroid_and_list.centroid;
-                        nearest_centroids_lists[global_particle_idx]
+                        buffers.nearest_centroids_lists[global_particle_idx]
                             = nearest_centroid_and_list.list;
                     } else {
-                        nearest_centroid = impl::nearest_centroid_from_subset(
+                        nearest_centroid = detail::nearest_centroid_from_subset(
                             cluster.particles[in_cluster_particle_idx],
-                            particle_cluster_metadata[global_particle_idx],
+                            buffers.particle_cluster_metadata[global_particle_idx],
                             clusters,
-                            nearest_centroids_lists[global_particle_idx],
+                            buffers.nearest_centroids_lists[global_particle_idx],
                             Options.cluster_count
                         );
                     }
@@ -361,7 +373,7 @@ void nbs::cluster::k_means(
 
                 // If this is the first particle to join a cluster this round, then set
                 // values, otherwise add the new values in.
-                if (!cluster_modified_in_iteration[initial_cluster_idx]) {
+                if (!buffers.cluster_modified_in_iteration[initial_cluster_idx]) {
                     clusters[nearest_centroid.idx].centroid.x
                         = cluster.particles[in_cluster_particle_idx].x;
                     clusters[nearest_centroid.idx].centroid.y
@@ -371,7 +383,7 @@ void nbs::cluster::k_means(
 
                     clusters[nearest_centroid.idx].particle_count = 0;
 
-                    cluster_modified_in_iteration[initial_cluster_idx] = true;
+                    buffers.cluster_modified_in_iteration[initial_cluster_idx] = true;
                 } else {
                     clusters[nearest_centroid.idx].centroid.x
                         += cluster.particles[in_cluster_particle_idx].x;
@@ -385,11 +397,13 @@ void nbs::cluster::k_means(
 
                 // If the particle has changed cluster particleship, then update changes
                 // in iteration and its current cluster index.
-                if (particle_cluster_metadata[global_particle_idx].current_cluster.idx
+                if (buffers.particle_cluster_metadata[global_particle_idx]
+                        .current_cluster.idx
                     != nearest_centroid.idx)
                 {
                     ++changes_in_iteration;
-                    particle_cluster_metadata[global_particle_idx].current_cluster.idx
+                    buffers.particle_cluster_metadata[global_particle_idx]
+                        .current_cluster.idx
                         = nearest_centroid.idx;
                 }
 
@@ -397,12 +411,12 @@ void nbs::cluster::k_means(
                 // so we should update it! However, if we want to avoid the approaching
                 // centroid optimisation, then we should set the distance to the minimum
                 // possible to force distance calculations for all centroids.
-                if (Options.no_approaching_centroid_optimisation) {
-                    particle_cluster_metadata[global_particle_idx]
+                if (!Options.approaching_centroid_optimisation) {
+                    buffers.particle_cluster_metadata[global_particle_idx]
                         .current_cluster.distance
                         = std::numeric_limits<NBS_PRECISION>::min();
                 } else {
-                    particle_cluster_metadata[global_particle_idx]
+                    buffers.particle_cluster_metadata[global_particle_idx]
                         .current_cluster.distance
                         = nearest_centroid.distance;
                 }
@@ -447,24 +461,18 @@ void nbs::cluster::k_means(
     std::array<ui32, Options.cluster_count> particle_cursors = {};
     for (ui32 particle_idx = 0; particle_idx < Options.particle_count; ++particle_idx) {
         ui32 new_cluster_offset
-            = particle_cursors[particle_cluster_metadata[particle_idx]
+            = particle_cursors[buffers.particle_cluster_metadata[particle_idx]
                                    .current_cluster.idx]++;
 
         const Cluster<ParticleType>& old_cluster
-            = initial_clusters[particle_cluster_metadata[particle_idx]
+            = initial_clusters[buffers.particle_cluster_metadata[particle_idx]
                                    .initial_cluster_idx];
         const Cluster<ParticleType>& new_cluster
-            = clusters[particle_cluster_metadata[particle_idx].current_cluster.idx];
+            = clusters[buffers.particle_cluster_metadata[particle_idx]
+                           .current_cluster.idx];
 
         new_cluster.particles[new_cluster_offset]
-            = old_cluster.particles[particle_cluster_metadata[particle_idx]
+            = old_cluster.particles[buffers.particle_cluster_metadata[particle_idx]
                                         .initial_particle_idx];
     }
-
-    /************
-       Clean-up.
-       ************/
-
-    delete[] particle_cluster_metadata;
-    delete[] cluster_modified_in_iteration;
 }
