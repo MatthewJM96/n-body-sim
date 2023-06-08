@@ -149,41 +149,25 @@ void nbs::cluster::k_means(
                 // If this is the first particle to join a cluster this round, then set
                 // values, otherwise add the new values in.
                 if (!buffers.cluster_modified_in_iteration[nearest_centroid.idx]) {
-                    final_clusters[nearest_centroid.idx].centroid.position.x
-                        = particles
-                              [initial_cluster.particle_offset
-                               + in_cluster_particle_idx]
-                                  .position.x;
-                    final_clusters[nearest_centroid.idx].centroid.position.y
-                        = particles
-                              [initial_cluster.particle_offset
-                               + in_cluster_particle_idx]
-                                  .position.y;
-                    final_clusters[nearest_centroid.idx].centroid.position.z
-                        = particles
-                              [initial_cluster.particle_offset
-                               + in_cluster_particle_idx]
-                                  .position.z;
+                    for (size_t dim = 0; dim < Dimensions; ++dim) {
+                        final_clusters[nearest_centroid.idx].centroid.position[dim]
+                            = particles
+                                  [initial_cluster.particle_offset
+                                   + in_cluster_particle_idx]
+                                      .position[dim];
+                    }
 
                     final_clusters[nearest_centroid.idx].particle_count = 0;
 
                     buffers.cluster_modified_in_iteration[nearest_centroid.idx] = true;
                 } else {
-                    final_clusters[nearest_centroid.idx].centroid.position.x
-                        += particles
-                               [initial_cluster.particle_offset
-                                + in_cluster_particle_idx]
-                                   .position.x;
-                    final_clusters[nearest_centroid.idx].centroid.position.y
-                        += particles
-                               [initial_cluster.particle_offset
-                                + in_cluster_particle_idx]
-                                   .position.y;
-                    final_clusters[nearest_centroid.idx].centroid.position.z
-                        += particles
-                               [initial_cluster.particle_offset
-                                + in_cluster_particle_idx]
-                                   .position.z;
+                    for (size_t dim = 0; dim < Dimensions; ++dim) {
+                        final_clusters[nearest_centroid.idx].centroid.position[dim]
+                            += particles
+                                   [initial_cluster.particle_offset
+                                    + in_cluster_particle_idx]
+                                       .position[dim];
+                    }
 
                     ++(final_clusters[nearest_centroid.idx].particle_count);
                 }
