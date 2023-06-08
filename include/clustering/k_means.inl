@@ -98,35 +98,37 @@ void nbs::cluster::k_means(
                 }
 
                 detail::NearestCentroid nearest_centroid;
-                if (!Options.centroid_subset_optimisation || iterations == 0) {
-                    nearest_centroid = detail::nearest_centroid(
-                        cluster.particles[in_cluster_particle_idx],
-                        buffers.particle_cluster_metadata[global_particle_idx],
-                        clusters,
-                        Options.cluster_count
-                    );
-                } else {
-                    if (iterations == 1) {
-                        std::tie(
-                            nearest_centroid,
-                            buffers.nearest_centroids_lists[global_particle_idx]
-                        )
-                            = detail::nearest_centroid_and_build_list(
+                if constexpr (Options.centroid_subset_optimisation) {
+                    if (iterations == 0)
+                        nearest_centroid
+                            = detail::nearest_centroid<ParticleType, Options>(
+                                cluster.particles[in_cluster_particle_idx],
+                                buffers.particle_cluster_metadata[global_particle_idx],
+                                clusters
+                            );
+                    else if (iterations == 1) {
+                        nearest_centroid = detail::
+                            nearest_centroid_and_build_list<ParticleType, Options>(
                                 cluster.particles[in_cluster_particle_idx],
                                 buffers.particle_cluster_metadata[global_particle_idx],
                                 clusters,
-                                Options.cluster_count,
-                                Options.centroid_subset.k_prime
+                                buffers.nearest_centroids_lists[global_particle_idx]
                             );
                     } else {
-                        nearest_centroid = detail::nearest_centroid_from_subset(
-                            cluster.particles[in_cluster_particle_idx],
-                            buffers.particle_cluster_metadata[global_particle_idx],
-                            clusters,
-                            buffers.nearest_centroids_lists[global_particle_idx],
-                            Options.cluster_count
-                        );
+                        nearest_centroid = detail::
+                            nearest_centroid_from_subset<ParticleType, Options>(
+                                cluster.particles[in_cluster_particle_idx],
+                                buffers.particle_cluster_metadata[global_particle_idx],
+                                clusters,
+                                buffers.nearest_centroids_lists[global_particle_idx]
+                            );
                     }
+                } else {
+                    nearest_centroid = detail::nearest_centroid<ParticleType, Options>(
+                        cluster.particles[in_cluster_particle_idx],
+                        buffers.particle_cluster_metadata[global_particle_idx],
+                        clusters
+                    );
                 }
 
                 // If this is the first particle to join a cluster this round, then set

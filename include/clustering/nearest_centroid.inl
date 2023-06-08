@@ -1,9 +1,8 @@
-template <nbs::Particle ParticleType>
+template <nbs::Particle ParticleType, nbs::cluster::KMeansOptions Options>
 nbs::cluster::detail::NearestCentroid nbs::cluster::detail::nearest_centroid(
     const ParticleType&            particle,
     const ParticleClusterMetadata& particle_metadata,
-    const Cluster<ParticleType>*   clusters,
-    ui32                           cluster_count
+    const Cluster<ParticleType>*   clusters
 ) {
     // Optimisation by early back out of search if previous nearest centroid has got
     // closer - in which case it is guaranteed to still be the nearest centroid.
@@ -21,7 +20,7 @@ nbs::cluster::detail::NearestCentroid nbs::cluster::detail::nearest_centroid(
     NearestCentroid nearest_centroid
         = { particle_metadata.current_cluster.idx, new_distance_2_to_current_cluster };
 
-    for (ui32 cluster_idx = 0; cluster_idx < cluster_count; ++cluster_idx) {
+    for (ui32 cluster_idx = 0; cluster_idx < Options.cluster_count; ++cluster_idx) {
         if (cluster_idx == particle_metadata.current_cluster.idx) continue;
 
         NBS_PRECISION centroid_distance_2
@@ -36,14 +35,13 @@ nbs::cluster::detail::NearestCentroid nbs::cluster::detail::nearest_centroid(
     return nearest_centroid;
 }
 
-template <nbs::Particle ParticleType>
+template <nbs::Particle ParticleType, nbs::cluster::KMeansOptions Options>
 nbs::cluster::detail::NearestCentroid
 nbs::cluster::detail::nearest_centroid_from_subset(
     const ParticleType&            particle,
     const ParticleClusterMetadata& particle_metadata,
     const Cluster<ParticleType>*   clusters,
-    detail::NearestCentroidList    cluster_subset,
-    ui32                           cluster_count
+    detail::NearestCentroidList    cluster_subset
 ) {
     // Optimisation by early back out of search if previous nearest centroid has got
     // closer - in which case it is guaranteed to still be the nearest centroid.
@@ -61,7 +59,8 @@ nbs::cluster::detail::nearest_centroid_from_subset(
     NearestCentroid nearest_centroid
         = { particle_metadata.current_cluster.idx, new_distance_2_to_current_cluster };
 
-    for (ui32 cluster_subset_idx = 0; cluster_subset_idx < cluster_count;
+    for (ui32 cluster_subset_idx = 0;
+         cluster_subset_idx < Options.centroid_subset.k_prime;
          ++cluster_subset_idx)
     {
         ui32 cluster_idx = cluster_subset.indices[cluster_subset_idx];
@@ -82,16 +81,13 @@ nbs::cluster::detail::nearest_centroid_from_subset(
 
 #include <map>
 
-template <nbs::Particle ParticleType>
-std::tuple<
-    nbs::cluster::detail::NearestCentroid,
-    nbs::cluster::detail::NearestCentroidList>
+template <nbs::Particle ParticleType, nbs::cluster::KMeansOptions Options>
+nbs::cluster::detail::NearestCentroid
 nbs::cluster::detail::nearest_centroid_and_build_list(
     const ParticleType&            particle,
     const ParticleClusterMetadata& particle_metadata,
     const Cluster<ParticleType>*   clusters,
-    ui32                           cluster_count,
-    ui32                           subset_count
+    OUT detail::NearestCentroidList& cluster_subset
 ) {
     // Optimisation by making a subset of centroids to consider for a given particle.
     //     This is based on the paper "Faster k-means Cluster Estimation" by Khandelwal
@@ -104,9 +100,8 @@ nbs::cluster::detail::nearest_centroid_and_build_list(
             particle - clusters[particle_metadata.current_cluster.idx].centroid
         )
     };
-    NearestCentroidList nearest_centroid_list{ new ui32[subset_count] };
 
-    for (ui32 cluster_idx = 0; cluster_idx < cluster_count; ++cluster_idx) {
+    for (ui32 cluster_idx = 0; cluster_idx < Options.cluster_count; ++cluster_idx) {
         if (cluster_idx == particle_metadata.current_cluster.idx) continue;
 
         NBS_PRECISION centroid_distance_2
@@ -121,9 +116,9 @@ nbs::cluster::detail::nearest_centroid_and_build_list(
     }
 
     auto it = centroid_list.begin();
-    for (ui32 idx = 0; idx < subset_count; ++idx) {
-        nearest_centroid_list.indices[idx] = *it++;
+    for (ui32 idx = 0; idx < Options.centroid_subset.k_prime; ++idx) {
+        cluster_subset.indices[idx] = *it++;
     }
 
-    return { nearest_centroid, nearest_centroid_list };
+    return nearest_centroid;
 }

@@ -6,34 +6,31 @@
 #include "particle.hpp"
 
 #include "clustering/cluster.hpp"
+#include "clustering/options.hpp"
 
 namespace nbs {
     namespace cluster {
         namespace detail {
-            template <Particle ParticleType>
+            template <Particle ParticleType, KMeansOptions Options>
             NearestCentroid nearest_centroid(
                 const ParticleType&            particle,
                 const ParticleClusterMetadata& particle_metadata,
-                const Cluster<ParticleType>*   clusters,
-                ui32                           cluster_count
+                const Cluster<ParticleType>*   clusters
             );
-            template <Particle ParticleType>
+            template <Particle ParticleType, KMeansOptions Options>
             NearestCentroid nearest_centroid_from_subset(
                 const ParticleType&            particle,
                 const ParticleClusterMetadata& particle_metadata,
                 const Cluster<ParticleType>*   clusters,
-                NearestCentroidList            cluster_subset,
-                ui32                           cluster_count
+                NearestCentroidList            cluster_subset
             );
 
-            template <Particle ParticleType>
-            std::tuple<NearestCentroid, NearestCentroidList>
-            nearest_centroid_and_build_list(
+            template <Particle ParticleType, KMeansOptions Options>
+            NearestCentroid nearest_centroid_and_build_list(
                 const ParticleType&            particle,
                 const ParticleClusterMetadata& particle_metadata,
                 const Cluster<ParticleType>*   clusters,
-                ui32                           cluster_count,
-                ui32                           subset_count
+                OUT NearestCentroidList        cluster_subset
             );
         };  // namespace detail
     }       // namespace cluster
