@@ -3,24 +3,15 @@
 
 #pragma once
 
+#include "particle.hpp"
+
 namespace nbs {
     namespace cluster {
-        template <
-            typename Precision,
-            typename =
-                typename std::enable_if<std::is_floating_point<Precision>::value>::type>
-        struct Member {
-            Precision x, y, z;
-        };
-
-        template <
-            typename Precision,
-            typename =
-                typename std::enable_if<std::is_floating_point<Precision>::value>::type>
+        template <Particle ParticleType>
         struct Cluster {
-            Member<Precision>  centroid;
-            Member<Precision>* members;
-            ui32               member_count;
+            ParticleType  centroid;
+            ParticleType* particles;
+            ui32          particle_count;
         };
 
         struct KMeansOptions {
@@ -35,82 +26,73 @@ namespace nbs {
             } centroid_subset;
         };
 
-        template <typename Precision>
-        Precision
-        member_distance_2(const Member<Precision>& lhs, const Member<Precision>& rhs);
+        template <Particle ParticleType>
+        NBS_PRECISION
+        particle_distance_2(const ParticleType& lhs, const ParticleType& rhs);
 
-        template <typename Precision>
+        template <Particle ParticleType>
         void
-        kpp(Member<Precision>* members,
-            ui32               member_count,
-            Member<Precision>* centroids,
-            ui32               centroid_count);
+        kpp(ParticleType* particles,
+            ui32          particle_count,
+            ParticleType* centroids,
+            ui32          centroid_count);
 
-        template <typename Precision>
+        template <Particle ParticleType>
         void k_means(
-            const Cluster<Precision>* initial_clusters,
-            ui32                      initial_cluster_count,
-            const KMeansOptions&      options,
-            OUT Cluster<Precision>*& clusters
+            const Cluster<ParticleType>* initial_clusters,
+            ui32                         initial_cluster_count,
+            const KMeansOptions&         options,
+            OUT Cluster<ParticleType>*& clusters
         );
 
         namespace impl {
-            template <
-                typename Precision,
-                typename = typename std::enable_if<
-                    std::is_floating_point<Precision>::value>::type>
             struct NearestCentroid {
-                ui32      idx;
-                Precision distance;
+                ui32          idx;
+                NBS_PRECISION distance;
             };
 
-            template <
-                typename Precision,
-                typename = typename std::enable_if<
-                    std::is_floating_point<Precision>::value>::type>
-            struct MemberClusterMetadata {
+            struct ParticleClusterMetadata {
                 ui32 initial_cluster_idx;
-                ui32 initial_member_idx;
+                ui32 initial_particle_idx;
 
-                NearestCentroid<Precision> current_cluster;
+                NearestCentroid current_cluster;
             };
 
             struct NearestCentroidList {
                 ui32* indices;
             };
 
-            template <typename Precision>
             struct NearestCentroidAndList {
-                NearestCentroid<Precision> centroid;
-                NearestCentroidList        list;
+                NearestCentroid     centroid;
+                NearestCentroidList list;
             };
 
-            template <typename Precision>
-            NearestCentroid<Precision> nearest_centroid(
-                const Member<Precision>&                member,
-                const MemberClusterMetadata<Precision>& member_metadata,
-                const Cluster<Precision>*               clusters,
-                ui32                                    cluster_count
+            template <Particle ParticleType>
+            NearestCentroid nearest_centroid(
+                const ParticleType&            particle,
+                const ParticleClusterMetadata& particle_metadata,
+                const Cluster<ParticleType>*   clusters,
+                ui32                           cluster_count
             );
-            template <typename Precision>
-            NearestCentroid<Precision> nearest_centroid_from_subset(
-                const Member<Precision>&                member,
-                const MemberClusterMetadata<Precision>& member_metadata,
-                const Cluster<Precision>*               clusters,
-                NearestCentroidList                     cluster_subset,
-                ui32                                    cluster_count
+            template <Particle ParticleType>
+            NearestCentroid nearest_centroid_from_subset(
+                const ParticleType&            particle,
+                const ParticleClusterMetadata& particle_metadata,
+                const Cluster<ParticleType>*   clusters,
+                NearestCentroidList            cluster_subset,
+                ui32                           cluster_count
             );
 
-            template <typename Precision>
-            NearestCentroidAndList<Precision> nearest_centroid_and_build_list(
-                const Member<Precision>&                member,
-                const MemberClusterMetadata<Precision>& member_metadata,
-                const Cluster<Precision>*               clusters,
-                ui32                                    cluster_count,
-                ui32                                    subset_count
+            template <Particle ParticleType>
+            NearestCentroidAndList nearest_centroid_and_build_list(
+                const ParticleType&            particle,
+                const ParticleClusterMetadata& particle_metadata,
+                const Cluster<ParticleType>*   clusters,
+                ui32                           cluster_count,
+                ui32                           subset_count
             );
-        }  // namespace impl
-    }      // namespace cluster
+        };  // namespace impl
+    }       // namespace cluster
 }  // namespace nbs
 
 #include "cluster.inl"
