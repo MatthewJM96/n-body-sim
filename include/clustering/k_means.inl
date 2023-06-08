@@ -197,7 +197,7 @@ void nbs::cluster::k_means(
        Sort particles to their final clusters.
                                      ************/
 
-    auto particle_to_cluster_idx = [&final_clusters](const auto& particle) {
+    auto particle_to_cluster_idx = [&final_clusters, &buffers](const auto& particle) {
         return buffers.particle_nearest_centroid[particle.cluster_metadata_idx].idx;
     };
 
