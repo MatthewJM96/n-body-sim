@@ -6,11 +6,9 @@ void nbs::cluster::kpp(
        Set up metadata for k++ algorithm.
                                 ************/
 
-    ui32  number_of_particles_chosen  = 1;
-    bool* particle_chosen_as_centroid = new bool[Options.particle_count];
+    bool* particle_chosen_as_centroid = new bool[Options.particle_count]{};
 
-    NBS_PRECISION* cumulative_distance_2s = new NBS_PRECISION[Options.particle_count];
-    NBS_PRECISION  total_distance_2       = 0.0;
+    NBS_PRECISION* cumulative_distance_2s = new NBS_PRECISION[Options.particle_count]{};
 
     std::default_random_engine generator;
 
@@ -31,6 +29,8 @@ void nbs::cluster::kpp(
                                                  ************/
 
     for (ui32 cluster_idx = 1; cluster_idx < Options.cluster_count; ++cluster_idx) {
+        NBS_PRECISION total_distance_2 = 0.0;
+
         //
         // For each particle of the dataset not so far chosen as a centroid, determine
         // the minimum distance to a chosen centroid and select one of those particles
@@ -44,8 +44,12 @@ void nbs::cluster::kpp(
         {
             // Skip particles already chosen as a centroid.
             if (particle_chosen_as_centroid[particle_idx]) {
-                cumulative_distance_2s[particle_idx]
-                    = cumulative_distance_2s[particle_idx - 1];
+                if (particle_idx == 0) {
+                    cumulative_distance_2s[0] = 0.0;
+                } else {
+                    cumulative_distance_2s[particle_idx]
+                        = cumulative_distance_2s[particle_idx - 1];
+                }
                 continue;
             }
 
@@ -56,8 +60,8 @@ void nbs::cluster::kpp(
                  ++chosen_cluster_idx)
             {
                 NBS_PRECISION distance_2_to_chosen_centroid = math::distance2(
-                    particles[particle_idx].position
-                    - clusters[chosen_cluster_idx].centroid.position
+                    particles[particle_idx].position,
+                    clusters[chosen_cluster_idx].centroid.position
                 );
 
                 if (distance_2_to_chosen_centroid
@@ -93,6 +97,7 @@ void nbs::cluster::kpp(
             if (cumulative_distance_2s[particle_idx] > choice) {
                 clusters[cluster_idx].centroid            = particles[particle_idx];
                 particle_chosen_as_centroid[particle_idx] = true;
+                break;
             }
         }
     }
