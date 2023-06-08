@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "cluster.h"
+#include "clustering/clustering.hpp"
 #include "particle.hpp"
 
 int main() { }

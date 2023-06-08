@@ -109,6 +109,8 @@ namespace nbs {
     using f64m2 = mat<2, 2, f64>;
     using f64m3 = mat<3, 3, f64>;
     using f64m4 = mat<4, 4, f64>;
+
+    namespace math = glm;
 }  // namespace nbs
 
 #endif  // N_BODY_SIM_TYPES_HPP
