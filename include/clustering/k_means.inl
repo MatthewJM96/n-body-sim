@@ -8,6 +8,18 @@ void nbs::cluster::k_means(
     IN OUT KMeansBuffers<Options> buffers
 ) {
     /************
+       Set up particle nearest centroids if front loaded.
+                                                ************/
+
+    if constexpr (Options.front_loaded) {
+        for (size_t particle_idx = 0; particle_idx < Options.particle_count;
+             ++particle_idx)
+        {
+            buffers.particle_nearest_centroid[particle_idx].idx = 0;
+        }
+    }
+
+    /************
        Set up final clusters for k-means algorithm.
                                     ************/
 
