@@ -40,7 +40,7 @@ namespace nbs {
         };
 
         template <KMeansOptions Options>
-        void allocate_kmeans_buffers(OUT CALLER_DELETE KMeansBuffers<Options> buffers);
+        void allocate_kmeans_buffers(OUT CALLER_DELETE KMeansBuffers<Options>& buffers);
 
         template <KMeansOptions Options>
         void deallocate_kmeans_buffers(OUT CALLER_DELETE KMeansBuffers<Options> buffers
