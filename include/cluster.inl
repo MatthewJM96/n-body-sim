@@ -1,12 +1,13 @@
 template <typename Precision>
-Precision
-cluster::member_distance_2(const Member<Precision>& lhs, const Member<Precision>& rhs) {
+Precision nbs::cluster::member_distance_2(
+    const Member<Precision>& lhs, const Member<Precision>& rhs
+) {
     return (lhs.x - rhs.x) * (lhs.x - rhs.x) + (lhs.y - rhs.y) * (lhs.y - rhs.y)
            + (lhs.z - rhs.z) * (lhs.z - rhs.z);
 }
 
 template <typename Precision>
-void cluster::kpp(
+void nbs::cluster::kpp(
     Member<Precision>* members,
     ui32               member_count,
     Member<Precision>* centroids,
@@ -109,7 +110,7 @@ void cluster::kpp(
 }
 
 template <typename Precision>
-cluster::impl::NearestCentroid<Precision> cluster::impl::nearest_centroid(
+nbs::cluster::impl::NearestCentroid<Precision> nbs::cluster::impl::nearest_centroid(
     const Member<Precision>&                member,
     const MemberClusterMetadata<Precision>& member_metadata,
     const Cluster<Precision>*               clusters,
@@ -146,7 +147,8 @@ cluster::impl::NearestCentroid<Precision> cluster::impl::nearest_centroid(
 }
 
 template <typename Precision>
-cluster::impl::NearestCentroid<Precision> cluster::impl::nearest_centroid_from_subset(
+nbs::cluster::impl::NearestCentroid<Precision>
+nbs::cluster::impl::nearest_centroid_from_subset(
     const Member<Precision>&                member,
     const MemberClusterMetadata<Precision>& member_metadata,
     const Cluster<Precision>*               clusters,
@@ -190,8 +192,8 @@ cluster::impl::NearestCentroid<Precision> cluster::impl::nearest_centroid_from_s
 #include <map>
 
 template <typename Precision>
-cluster::impl::NearestCentroidAndList<Precision>
-cluster::impl::nearest_centroid_and_build_list(
+nbs::cluster::impl::NearestCentroidAndList<Precision>
+nbs::cluster::impl::nearest_centroid_and_build_list(
     const Member<Precision>&                member,
     const MemberClusterMetadata<Precision>& member_metadata,
     const Cluster<Precision>*               clusters,
@@ -238,7 +240,7 @@ cluster::impl::nearest_centroid_and_build_list(
 #include <cstring>
 
 template <typename Precision>
-void cluster::k_means(
+void nbs::cluster::k_means(
     const Cluster<Precision>* initial_clusters,
     ui32                      cluster_count,
     ui32                      member_count,
