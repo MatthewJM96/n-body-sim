@@ -39,10 +39,13 @@ void do_a_cluster_job_dim_2() {
     cluster::kpp<2, MyParticle2D, options>(particles, clusters);
 
     // Quick check.
+    std::cout << "    kpp centroids:" << std::endl;
+    // clang-format off
     for (size_t i = 0; i < ClusterCount; ++i) {
-        std::cout << clusters[i].centroid.position.x << " - "
-                  << clusters[i].centroid.position.y << std::endl;
+        std::cout << "        " << clusters[i].centroid.position.x << " - "
+                                << clusters[i].centroid.position.y << std::endl;
     }
+    // clang-format on
 
     // Front load into first cluster.
     clusters[0].particle_count  = ParticleCount;
@@ -58,10 +61,13 @@ void do_a_cluster_job_dim_2() {
     );
 
     // Quick check.
+    std::cout << "    k_means centroids:" << std::endl;
+    // clang-format off
     for (size_t i = 0; i < ClusterCount; ++i) {
-        std::cout << clusters[i + ClusterCount].centroid.position.x << " - "
-                  << clusters[i + ClusterCount].centroid.position.y << std::endl;
+        std::cout << "        " << clusters[i + ClusterCount].centroid.position.x << " - "
+                                << clusters[i + ClusterCount].centroid.position.y << std::endl;
     }
+    // clang-format on
 }
 
 template <size_t ParticleCount, size_t ClusterCount>
@@ -91,11 +97,14 @@ void do_a_cluster_job_dim_3() {
     cluster::kpp<3, MyParticle, options>(particles, clusters);
 
     // Quick check.
+    std::cout << "    kpp centroids:" << std::endl;
+    // clang-format off
     for (size_t i = 0; i < ClusterCount; ++i) {
-        std::cout << clusters[i].centroid.position.x << " - "
-                  << clusters[i].centroid.position.y << " - "
-                  << clusters[i].centroid.position.z << std::endl;
+        std::cout << "        " << clusters[i].centroid.position.x << " - "
+                                << clusters[i].centroid.position.y << " - "
+                                << clusters[i].centroid.position.z << std::endl;
     }
+    // clang-format on
 
     // Front load into first cluster.
     clusters[0].particle_count  = ParticleCount;
@@ -111,15 +120,22 @@ void do_a_cluster_job_dim_3() {
     );
 
     // Quick check.
+    // clang-format off
+    std::cout << "    k_means centroids:" << std::endl;
     for (size_t i = 0; i < ClusterCount; ++i) {
-        std::cout << clusters[i + ClusterCount].centroid.position.x << " - "
-                  << clusters[i + ClusterCount].centroid.position.y << " - "
-                  << clusters[i + ClusterCount].centroid.position.z << std::endl;
+        std::cout << "        " << clusters[i + ClusterCount].centroid.position.x << " - "
+                                << clusters[i + ClusterCount].centroid.position.y << " - "
+                                << clusters[i + ClusterCount].centroid.position.z << std::endl;
     }
+    // clang-format on
 }
 
 int main() {
+    std::cout << "2D case:" << std::endl;
     do_a_cluster_job_dim_2<1000, 10>();
 
+    std::cout << std::endl << std::endl;
+
+    std::cout << "3D case:" << std::endl;
     do_a_cluster_job_dim_3<1000, 10>();
 }
