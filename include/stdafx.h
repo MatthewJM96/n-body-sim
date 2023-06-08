@@ -31,6 +31,7 @@
 
 // Our Stuff
 #include "decorators.hpp"
+#include "precision.hpp"
 #include "types.hpp"
 
 #endif  // N_BODY_SIM_STDAFX_H
