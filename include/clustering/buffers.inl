@@ -2,8 +2,8 @@ template <nbs::cluster::KMeansOptions Options>
 void nbs::cluster::allocate_kmeans_buffers(
     OUT CALLER_DELETE KMeansBuffers<Options>& buffers
 ) {
-    buffers.particle_metadata
-        = new detail::ParticleClusterMetadata[Options.particle_count];
+    buffers.particle_nearest_centroid
+        = new detail::NearestCentroid[Options.particle_count];
     buffers.cluster_modified_in_iteration = new bool[Options.cluster_count];
 
     if constexpr (Options.centroid_subset_optimisation) {
@@ -32,5 +32,5 @@ void nbs::cluster::deallocate_kmeans_buffers(
     }
 
     delete[] buffers.cluster_modified_in_iteration;
-    delete[] buffers.particle_metadata;
+    delete[] buffers.particle_nearest_centroid;
 }

@@ -1,32 +1,29 @@
-template <nbs::Particle ParticleType, nbs::cluster::KMeansOptions Options>
-nbs::cluster::detail::NearestCentroid nbs::cluster::detail::nearest_centroid(
-    const ParticleType&            particle,
-    const ParticleClusterMetadata& particle_metadata,
-    const Cluster<ParticleType>*   clusters
+template <nbs::ClusteredParticle ParticleType, nbs::cluster::KMeansOptions Options>
+void nbs::cluster::detail::nearest_centroid(
+    const ParticleType&          particle,
+    IN OUT NearestCentroid&      nearest_centroid,
+    const Cluster<ParticleType>* clusters
 ) {
-    NBS_PRECISION new_distance_2_to_current_cluster = math::distance2(
-        particle - clusters[particle_metadata.current_cluster.idx].centroid
-    );
+    NBS_PRECISION new_distance_2_to_current_cluster
+        = math::distance2(particle - clusters[nearest_centroid.idx].centroid);
 
     // Optimisation by early back out of search if previous nearest centroid has got
     // closer - in which case it is guaranteed to still be the nearest centroid.
     //     This is based on the paper "An Efficient Enhanced k-means Clustering
     //     Algorithm" by Fahim A.M., Salem A.M., Torkey F.A., and Ramadan M.A.
     if constexpr (Options.approaching_centroid_optimisation) {
-        if (new_distance_2_to_current_cluster
-            < particle_metadata.current_cluster.distance)
-        {
-            return NearestCentroid{ particle_metadata.current_cluster.idx,
-                                    new_distance_2_to_current_cluster };
+        if (new_distance_2_to_current_cluster < nearest_centroid.distance) {
+            nearest_centroid.distance = new_distance_2_to_current_cluster;
+
+            return;
         }
     }
 
-    NearestCentroid nearest_centroid
-        = { particle_metadata.current_cluster.idx, new_distance_2_to_current_cluster };
+    nearest_centroid.distance = new_distance_2_to_current_cluster;
 
     // For each centroid, consider if it is closer than the current centroid.
     for (ui32 cluster_idx = 0; cluster_idx < Options.cluster_count; ++cluster_idx) {
-        if (cluster_idx == particle_metadata.current_cluster.idx) continue;
+        if (cluster_idx == nearest_centroid.idx) continue;
 
         NBS_PRECISION centroid_distance_2
             = math::distance2(particle - clusters[cluster_idx].centroid);
@@ -36,37 +33,31 @@ nbs::cluster::detail::NearestCentroid nbs::cluster::detail::nearest_centroid(
             nearest_centroid.distance = centroid_distance_2;
         }
     }
-
-    return nearest_centroid;
 }
 
-template <nbs::Particle ParticleType, nbs::cluster::KMeansOptions Options>
-nbs::cluster::detail::NearestCentroid
-nbs::cluster::detail::nearest_centroid_from_subset(
-    const ParticleType&            particle,
-    const ParticleClusterMetadata& particle_metadata,
-    const Cluster<ParticleType>*   clusters,
-    detail::NearestCentroidList    cluster_subset
+template <nbs::ClusteredParticle ParticleType, nbs::cluster::KMeansOptions Options>
+void nbs::cluster::detail::nearest_centroid_from_subset(
+    const ParticleType&          particle,
+    IN OUT NearestCentroid&      nearest_centroid,
+    const Cluster<ParticleType>* clusters,
+    detail::NearestCentroidList  cluster_subset
 ) {
-    NBS_PRECISION new_distance_2_to_current_cluster = math::distance2(
-        particle - clusters[particle_metadata.current_cluster.idx].centroid
-    );
+    NBS_PRECISION new_distance_2_to_current_cluster
+        = math::distance2(particle - clusters[nearest_centroid.idx].centroid);
 
     // Optimisation by early back out of search if previous nearest centroid has got
     // closer - in which case it is guaranteed to still be the nearest centroid.
     //     This is based on the paper "An Efficient Enhanced k-means Clustering
     //     Algorithm" by Fahim A.M., Salem A.M., Torkey F.A., and Ramadan M.A.
     if constexpr (Options.approaching_centroid_optimisation) {
-        if (new_distance_2_to_current_cluster
-            < particle_metadata.current_cluster.distance)
-        {
-            return NearestCentroid{ particle_metadata.current_cluster.idx,
-                                    new_distance_2_to_current_cluster };
+        if (new_distance_2_to_current_cluster < nearest_centroid.distance) {
+            nearest_centroid.distance = new_distance_2_to_current_cluster;
+
+            return;
         }
     }
 
-    NearestCentroid nearest_centroid
-        = { particle_metadata.current_cluster.idx, new_distance_2_to_current_cluster };
+    nearest_centroid.distance = new_distance_2_to_current_cluster;
 
     // For each centroid, consider if it is closer than the current centroid.
     for (ui32 cluster_subset_idx = 0;
@@ -75,7 +66,7 @@ nbs::cluster::detail::nearest_centroid_from_subset(
     {
         ui32 cluster_idx = cluster_subset.indices[cluster_subset_idx];
 
-        if (cluster_idx == particle_metadata.current_cluster.idx) continue;
+        if (cluster_idx == nearest_centroid.idx) continue;
 
         NBS_PRECISION centroid_distance_2
             = math::distance2(particle - clusters[cluster_idx].centroid);
@@ -85,16 +76,13 @@ nbs::cluster::detail::nearest_centroid_from_subset(
             nearest_centroid.distance = centroid_distance_2;
         }
     }
-
-    return nearest_centroid;
 }
 
-template <nbs::Particle ParticleType, nbs::cluster::KMeansOptions Options>
-nbs::cluster::detail::NearestCentroid
-nbs::cluster::detail::nearest_centroid_and_build_list(
-    const ParticleType&            particle,
-    const ParticleClusterMetadata& particle_metadata,
-    const Cluster<ParticleType>*   clusters,
+template <nbs::ClusteredParticle ParticleType, nbs::cluster::KMeansOptions Options>
+void nbs::cluster::detail::nearest_centroid_and_build_list(
+    const ParticleType&          particle,
+    OUT NearestCentroid&         nearest_centroid,
+    const Cluster<ParticleType>* clusters,
     OUT detail::NearestCentroidList& cluster_subset,
     KMeansBuffers<Options>           buffers
 ) {
@@ -121,9 +109,8 @@ nbs::cluster::detail::nearest_centroid_and_build_list(
         cluster_subset.indices[idx] = buffers.nearest_centroid_indices[idx];
     }
 
-    return NearestCentroid{ buffers.nearest_centroid_indices[0],
-                            math::distance2(
-                                particle
-                                - clusters[buffers.nearest_centroid_indices[0]].centroid
-                            ) };
+    nearest_centroid.idx      = buffers.nearest_centroid_indices[0];
+    nearest_centroid.distance = math::distance2(
+        particle - clusters[buffers.nearest_centroid_indices[0]].centroid
+    );
 }

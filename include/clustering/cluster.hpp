@@ -7,11 +7,11 @@
 
 namespace nbs {
     namespace cluster {
-        template <Particle ParticleType>
+        template <ClusteredParticle ParticleType>
         struct Cluster {
-            ParticleType  centroid;
-            ParticleType* particles;
-            ui32          particle_count;
+            ParticleType centroid;
+            size_t       particle_offset;
+            size_t       particle_count;
         };
     }  // namespace cluster
 }  // namespace nbs

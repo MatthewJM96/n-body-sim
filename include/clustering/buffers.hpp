@@ -13,13 +13,6 @@ namespace nbs {
                 NBS_PRECISION distance;
             };
 
-            struct ParticleClusterMetadata {
-                ui32 initial_cluster_idx;
-                ui32 initial_particle_idx;
-
-                NearestCentroid current_cluster;
-            };
-
             struct NearestCentroidList {
                 ui32* indices;
             };
@@ -32,18 +25,18 @@ namespace nbs {
         struct KMeansBuffers<
             Options,
             typename std::enable_if_t<!Options.centroid_subset_optimisation>> {
-            detail::ParticleClusterMetadata* particle_metadata;
-            bool*                            cluster_modified_in_iteration;
+            detail::NearestCentroid* particle_nearest_centroid;
+            bool*                    cluster_modified_in_iteration;
         };
 
         template <KMeansOptions Options>
         struct KMeansBuffers<
             Options,
             typename std::enable_if_t<Options.centroid_subset_optimisation>> {
-            detail::ParticleClusterMetadata* particle_metadata;
-            bool*                            cluster_modified_in_iteration;
-            detail::NearestCentroidList*     nearest_centroid_lists;
-            ui32*                            nearest_centroid_indices;
+            detail::NearestCentroid*     particle_nearest_centroid;
+            bool*                        cluster_modified_in_iteration;
+            detail::NearestCentroidList* nearest_centroid_lists;
+            ui32*                        nearest_centroid_indices;
         };
 
         template <KMeansOptions Options>

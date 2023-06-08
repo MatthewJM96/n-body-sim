@@ -1,4 +1,4 @@
-template <nbs::Particle ParticleType>
+template <nbs::ClusteredParticle ParticleType>
 void nbs::cluster::kpp(
     ParticleType* particles,
     ui32          particle_count,

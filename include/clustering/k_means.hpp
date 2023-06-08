@@ -11,11 +11,12 @@
 
 namespace nbs {
     namespace cluster {
-        template <Particle ParticleType, KMeansOptions Options>
+        template <ClusteredParticle ParticleType, KMeansOptions Options>
         void k_means(
+            IN OUT CALLER_DELETE ParticleType* particles,
             IN CALLER_DELETE const Cluster<ParticleType>* initial_clusters,
             OUT CALLER_DELETE Cluster<ParticleType>* final_clusters,
-            IN OUT CALLER_DELETE KMeansBuffers<Options> buffers
+            IN OUT KMeansBuffers<Options> buffers
         );
     }  // namespace cluster
 }  // namespace nbs

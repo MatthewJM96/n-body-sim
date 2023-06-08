@@ -7,7 +7,7 @@
 
 namespace nbs {
     namespace cluster {
-        template <Particle ParticleType>
+        template <ClusteredParticle ParticleType>
         void
         kpp(ParticleType* particles,
             ui32          particle_count,
