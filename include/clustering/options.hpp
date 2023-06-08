@@ -17,7 +17,7 @@ namespace nbs {
             struct {
                 ui32 k_prime    = 30;
                 bool do_rebuild = true;
-            } centroid_subset;
+            } centroid_subset = {};
         };
     }  // namespace cluster
 }  // namespace nbs
