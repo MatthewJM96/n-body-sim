@@ -35,7 +35,7 @@ option(NBS_ENABLE_MEMORY_SANITIZER "Whether to compile with memory sanitizer." O
 option(NBS_ENABLE_GPERF_PROFILER "Whether to compile with GPerf profiler." OFF)
 
 if (UNIX OR MINGW)
-    set(CMAKE_CXX_FLAGS "-pthread")
+    set(CMAKE_CXX_FLAGS "-pthread -mavx2")
     if (NBS_ENABLE_ADDRESS_SANITIZER)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fno-omit-frame-pointer")
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address -fno-omit-frame-pointer")
@@ -76,7 +76,7 @@ if (UNIX OR MINGW)
         # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fmodules -fprebuilt-module-path=${PROJECT_BINARY_DIR}/clm/${CMAKE_BUILD_TYPE}/")
     endif()
 elseif (MSVC)
-    set(CMAKE_CXX_FLAGS "/W3 /WX /EHsc /Zc:preprocessor")
+    set(CMAKE_CXX_FLAGS "/W3 /WX /EHsc /Zc:preprocessor /arch:AVX2")
     set(CMAKE_CXX_FLAGS_RELEASE "/MD /O2")
     set(CMAKE_CXX_FLAGS_DEBUG "/MDd /Od /Zi")
 
