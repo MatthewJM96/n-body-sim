@@ -1,20 +1,20 @@
 cmake_minimum_required(VERSION 3.22)
 
-# message(STATUS "Downloading conan.cmake from https://github.com/conan-io/cmake-conan")
-# file(DOWNLOAD "https://raw.githubusercontent.com/conan-io/cmake-conan/0.18.1/conan.cmake"
-#             "${CMAKE_BINARY_DIR}/cmake/conan.cmake"
-#             EXPECTED_HASH SHA256=5cdb3042632da3efff558924eecefd580a0e786863a857ca097c3d1d43df5dcd
-#             TLS_VERIFY ON
-#             STATUS DOWNLOAD_STATUS)
+message(STATUS "Downloading conan.cmake from https://github.com/conan-io/cmake-conan")
+file(DOWNLOAD "https://raw.githubusercontent.com/conan-io/cmake-conan/0.18.1/conan.cmake"
+            "${CMAKE_BINARY_DIR}/cmake/conan.cmake"
+            EXPECTED_HASH SHA256=5cdb3042632da3efff558924eecefd580a0e786863a857ca097c3d1d43df5dcd
+            TLS_VERIFY ON
+            STATUS DOWNLOAD_STATUS)
 
-# list(GET DOWNLOAD_STATUS 0 DOWNLOAD_STATUS_CODE)
-# if(NOT ${DOWNLOAD_STATUS_CODE} EQUAL 0)
-#     message(FATAL_ERROR "Error downloading conan.cmake: ${DOWNLOAD_STATUS}")
-# else()
-#     message(STATUS "Download result: ${DOWNLOAD_STATUS}")
-# endif()
+list(GET DOWNLOAD_STATUS 0 DOWNLOAD_STATUS_CODE)
+if(NOT ${DOWNLOAD_STATUS_CODE} EQUAL 0)
+    message(FATAL_ERROR "Error downloading conan.cmake: ${DOWNLOAD_STATUS}")
+else()
+    message(STATUS "Download result: ${DOWNLOAD_STATUS}")
+endif()
 
-# include(${CMAKE_BINARY_DIR}/cmake/conan.cmake)
+include(${CMAKE_BINARY_DIR}/cmake/conan.cmake)
 
 project(N_Body_Simulator)
 
@@ -90,36 +90,31 @@ endif()
 #     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fmodules -fprebuilt-module-path=${PROJECT_BINARY_DIR}/clm/${CMAKE_BUILD_TYPE}/")
 # endif()
 
-# set(NBS_Requirements
-#     glm/0.9.9.8
-#     sdl/2.26.1
-#     sdl_ttf/2.20.1
-#     libpng/1.6.39
-#     concurrentqueue/1.0.3
-#     boost/1.78.0
-#     bullet3/3.24
-#     entt/3.10.1
-#     zlib/1.2.13
-# )
+set(NBS_Requirements
+    glm/0.9.9.8
+)
 
 
-# conan_cmake_configure(REQUIRES ${NBS_Requirements}
-#                       GENERATORS cmake_find_package)
+conan_cmake_configure(REQUIRES ${NBS_Requirements}
+                      GENERATORS cmake_find_package)
 
-# conan_cmake_autodetect(settings)
+conan_cmake_autodetect(settings)
 
-# conan_cmake_install(PATH_OR_REFERENCE .
-#                     BUILD missing
-#                     REMOTE conancenter
-#                     SETTINGS ${settings})
+conan_cmake_install(PATH_OR_REFERENCE .
+                    BUILD missing
+                    REMOTE conancenter
+                    SETTINGS ${settings})
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_BINARY_DIR}")
+
+find_package(glm REQUIRED)
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_compile_definitions(DEBUG=1)
 endif()
 
 add_executable(NBS
+    "${PROJECT_SOURCE_DIR}/src/stdafx.cpp"
     "${PROJECT_SOURCE_DIR}/tests/main.cpp"
 )
 
@@ -130,28 +125,7 @@ target_precompile_headers(NBS
 
 set(NBS_Include_Dirs
     ${glm_INCLUDE_DIRS}
-    ${SDL2_INCLUDE_DIRS}
-    ${SDL2_ttf_INCLUDE_DIRS}
-    ${PNG_INCLUDE_DIRS}
-    ${concurrentqueue_INCLUDE_DIRS}
-    ${Boost_INCLUDE_DIRS}
-    ${Bullet_INCLUDE_DIRS}
-    ${EnTT_INCLUDE_DIRS}
 )
-
-if (NBS_USING_OPENGL)
-    set(NBS_Include_Dirs
-        ${NBS_Include_Dirs}
-        ${glew_INCLUDE_DIRS}
-    )
-endif()
-
-if (NBS_USING_LUA)
-    set(NBS_Include_Dirs
-        ${NBS_Include_Dirs}
-        ${luajit_Include_Dirs}
-    )
-endif()
 
 # TODO(Matthew): remove the "${PROJECT_SOURCE_DIR}" line and properly build
 #                engine and tests separately.
