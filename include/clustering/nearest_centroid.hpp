@@ -5,6 +5,7 @@
 
 #include "particle.hpp"
 
+#include "clustering/buffers.hpp"
 #include "clustering/cluster.hpp"
 #include "clustering/options.hpp"
 
@@ -30,7 +31,8 @@ namespace nbs {
                 const ParticleType&            particle,
                 const ParticleClusterMetadata& particle_metadata,
                 const Cluster<ParticleType>*   clusters,
-                OUT NearestCentroidList        cluster_subset
+                OUT NearestCentroidList        cluster_subset,
+                KMeansBuffers<Options>         buffers
             );
         };  // namespace detail
     }       // namespace cluster

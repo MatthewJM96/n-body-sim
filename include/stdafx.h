@@ -15,6 +15,12 @@
 #include <cstring>
 #include <string>
 
+// Algorithms
+#include <algorithm>
+
+// Ranges
+#include <ranges>
+
 // Streams
 #include <iostream>
 
