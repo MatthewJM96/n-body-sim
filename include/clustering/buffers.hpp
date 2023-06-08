@@ -43,6 +43,7 @@ namespace nbs {
             detail::ParticleClusterMetadata* particle_metadata;
             bool*                            cluster_modified_in_iteration;
             detail::NearestCentroidList*     nearest_centroid_lists;
+            ui32*                            nearest_centroid_indices;
         };
 
         template <KMeansOptions Options>

@@ -7,6 +7,7 @@ void nbs::cluster::allocate_kmeans_buffers(
     buffers.cluster_modified_in_iteration = new bool[Options.cluster_count];
 
     if constexpr (Options.centroid_subset_optimisation) {
+        buffers.nearest_centroid_indices = new size_t[Options.cluster_count];
         buffers.nearest_centroid_lists
             = new detail::NearestCentroidList[Options.particle_count];
 
@@ -27,6 +28,7 @@ void nbs::cluster::deallocate_kmeans_buffers(
         }
 
         delete[] buffers.nearest_centroid_lists;
+        delete[] buffers.nearest_centroid_indices;
     }
 
     delete[] buffers.cluster_modified_in_iteration;
