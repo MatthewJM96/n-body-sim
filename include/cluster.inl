@@ -265,7 +265,7 @@ void nbs::cluster::k_means(
         = new impl::ParticleClusterMetadata[particle_count];
     // TODO(Matthew): Do we template parameterise the centroid_subset_optimisation flag
     // to reduce memory usage if it is disabled?
-    [[maybe_unused]] impl::NearestCentroidList* nearest_centroids_lists
+    impl::NearestCentroidList* nearest_centroids_lists
         = new impl::NearestCentroidList[particle_count];
     bool* cluster_modified_in_iteration = new bool[cluster_count](false);
 
