@@ -8,7 +8,7 @@ namespace nbs {
     concept Particle = requires (Candidate x) {
                            {
                                x.position
-                               } -> std::same_as<vec<3, NBS_PRECISION>>;
+                               } -> std::same_as<vec<3, NBS_PRECISION>&>;
                        };
 
     template <typename Candidate>
@@ -16,7 +16,7 @@ namespace nbs {
         = Particle<Candidate> && requires (Candidate x) {
                                      {
                                          x.cluster_metadata_idx
-                                         } -> std::same_as<size_t>;
+                                         } -> std::same_as<size_t&>;
                                  };
 }  // namespace nbs
 
