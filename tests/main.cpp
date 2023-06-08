@@ -11,8 +11,9 @@ struct MyParticle {
 
 template <size_t ParticleCount, size_t ClusterCount>
 void do_a_cluster_job() {
-    constexpr cluster::KMeansOptions options
-        = { .particle_count = ParticleCount, .cluster_count = ClusterCount };
+    constexpr cluster::KMeansOptions options = { .particle_count = ParticleCount,
+                                                 .cluster_count  = ClusterCount,
+                                                 .front_loaded   = true };
 
     // Allocate particles.
     MyParticle* particles = new MyParticle[ParticleCount];
@@ -40,6 +41,10 @@ void do_a_cluster_job() {
                   << clusters[i].centroid.position.y << " - "
                   << clusters[i].centroid.position.z << std::endl;
     }
+
+    // Front load into first cluster.
+    clusters[0].particle_count  = ParticleCount;
+    clusters[0].particle_offset = 0;
 
     // Allocate buffers used for K-means.
     cluster::KMeansBuffers<options> buffers;
