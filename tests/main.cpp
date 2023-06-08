@@ -10,7 +10,7 @@ struct MyParticle {
 };
 
 template <size_t ParticleCount, size_t ClusterCount>
-void do_a_cluster_job() {
+void do_a_cluster_job_dim_3() {
     constexpr cluster::KMeansOptions options = { .particle_count = ParticleCount,
                                                  .cluster_count  = ClusterCount,
                                                  .front_loaded   = true };
@@ -29,11 +29,11 @@ void do_a_cluster_job() {
     }
 
     // Allocate clusters.
-    cluster::Cluster<MyParticle>* clusters
-        = new cluster::Cluster<MyParticle>[ClusterCount * 2];
+    cluster::Cluster<3, MyParticle>* clusters
+        = new cluster::Cluster<3, MyParticle>[ClusterCount * 2];
 
     // Do kpp initialisation.
-    cluster::kpp<MyParticle, options>(particles, clusters);
+    cluster::kpp<3, MyParticle, options>(particles, clusters);
 
     // Quick check.
     for (size_t i = 0; i < ClusterCount; ++i) {
@@ -51,7 +51,9 @@ void do_a_cluster_job() {
     cluster::allocate_kmeans_buffers<options>(buffers);
 
     // Do k_means.
-    cluster::k_means(particles, clusters, clusters + ClusterCount, buffers);
+    cluster::k_means<3, MyParticle, options>(
+        particles, clusters, clusters + ClusterCount, buffers
+    );
 
     // Quick check.
     for (size_t i = 0; i < ClusterCount; ++i) {
@@ -62,5 +64,5 @@ void do_a_cluster_job() {
 }
 
 int main() {
-    do_a_cluster_job<1000, 10>();
+    do_a_cluster_job_dim_3<1000, 10>();
 }

@@ -1,6 +1,9 @@
-template <nbs::ClusteredParticle ParticleType, nbs::cluster::KMeansOptions Options>
+template <
+    size_t                             Dimensions,
+    nbs::ClusteredParticle<Dimensions> ParticleType,
+    nbs::cluster::KMeansOptions        Options>
 void nbs::cluster::kpp(
-    const ParticleType* particles, IN OUT Cluster<ParticleType>* clusters
+    const ParticleType* particles, IN OUT Cluster<Dimensions, ParticleType>* clusters
 ) {
     /************
        Set up metadata for k++ algorithm.

@@ -12,27 +12,36 @@
 namespace nbs {
     namespace cluster {
         namespace detail {
-            template <ClusteredParticle ParticleType, KMeansOptions Options>
+            template <
+                size_t                        Dimensions,
+                ClusteredParticle<Dimensions> ParticleType,
+                KMeansOptions                 Options>
             void nearest_centroid(
-                const ParticleType&          particle,
-                IN OUT NearestCentroid&      nearest_centroid,
-                const Cluster<ParticleType>* clusters
+                const ParticleType&                      particle,
+                IN OUT NearestCentroid&                  nearest_centroid,
+                const Cluster<Dimensions, ParticleType>* clusters
             );
-            template <ClusteredParticle ParticleType, KMeansOptions Options>
+            template <
+                size_t                        Dimensions,
+                ClusteredParticle<Dimensions> ParticleType,
+                KMeansOptions                 Options>
             void nearest_centroid_from_subset(
-                const ParticleType&          particle,
-                IN OUT NearestCentroid&      nearest_centroid,
-                const Cluster<ParticleType>* clusters,
-                NearestCentroidList          cluster_subset
+                const ParticleType&                      particle,
+                IN OUT NearestCentroid&                  nearest_centroid,
+                const Cluster<Dimensions, ParticleType>* clusters,
+                NearestCentroidList                      cluster_subset
             );
 
-            template <ClusteredParticle ParticleType, KMeansOptions Options>
+            template <
+                size_t                        Dimensions,
+                ClusteredParticle<Dimensions> ParticleType,
+                KMeansOptions                 Options>
             void nearest_centroid_and_build_list(
-                const ParticleType&          particle,
-                OUT NearestCentroid&         nearest_centroid,
-                const Cluster<ParticleType>* clusters,
-                OUT NearestCentroidList      cluster_subset,
-                KMeansBuffers<Options>       buffers
+                const ParticleType&                      particle,
+                OUT NearestCentroid&                     nearest_centroid,
+                const Cluster<Dimensions, ParticleType>* clusters,
+                OUT NearestCentroidList                  cluster_subset,
+                KMeansBuffers<Options>                   buffers
             );
         };  // namespace detail
     }       // namespace cluster

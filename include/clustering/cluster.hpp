@@ -7,7 +7,7 @@
 
 namespace nbs {
     namespace cluster {
-        template <ClusteredParticle ParticleType>
+        template <size_t Dimensions, ClusteredParticle<Dimensions> ParticleType>
         struct Cluster {
             ParticleType centroid;
             size_t       particle_offset;

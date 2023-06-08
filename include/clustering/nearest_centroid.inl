@@ -1,8 +1,11 @@
-template <nbs::ClusteredParticle ParticleType, nbs::cluster::KMeansOptions Options>
+template <
+    size_t                             Dimensions,
+    nbs::ClusteredParticle<Dimensions> ParticleType,
+    nbs::cluster::KMeansOptions        Options>
 void nbs::cluster::detail::nearest_centroid(
-    const ParticleType&          particle,
-    IN OUT NearestCentroid&      nearest_centroid,
-    const Cluster<ParticleType>* clusters
+    const ParticleType&                      particle,
+    IN OUT NearestCentroid&                  nearest_centroid,
+    const Cluster<Dimensions, ParticleType>* clusters
 ) {
     NBS_PRECISION new_distance_2_to_current_cluster = math::distance2(
         particle.position, clusters[nearest_centroid.idx].centroid.position
@@ -37,12 +40,15 @@ void nbs::cluster::detail::nearest_centroid(
     }
 }
 
-template <nbs::ClusteredParticle ParticleType, nbs::cluster::KMeansOptions Options>
+template <
+    size_t                             Dimensions,
+    nbs::ClusteredParticle<Dimensions> ParticleType,
+    nbs::cluster::KMeansOptions        Options>
 void nbs::cluster::detail::nearest_centroid_from_subset(
-    const ParticleType&          particle,
-    IN OUT NearestCentroid&      nearest_centroid,
-    const Cluster<ParticleType>* clusters,
-    detail::NearestCentroidList  cluster_subset
+    const ParticleType&                      particle,
+    IN OUT NearestCentroid&                  nearest_centroid,
+    const Cluster<Dimensions, ParticleType>* clusters,
+    detail::NearestCentroidList              cluster_subset
 ) {
     NBS_PRECISION new_distance_2_to_current_cluster = math::distance2(
         particle.position, clusters[nearest_centroid.idx].centroid.position
@@ -82,11 +88,14 @@ void nbs::cluster::detail::nearest_centroid_from_subset(
     }
 }
 
-template <nbs::ClusteredParticle ParticleType, nbs::cluster::KMeansOptions Options>
+template <
+    size_t                             Dimensions,
+    nbs::ClusteredParticle<Dimensions> ParticleType,
+    nbs::cluster::KMeansOptions        Options>
 void nbs::cluster::detail::nearest_centroid_and_build_list(
-    const ParticleType&          particle,
-    OUT NearestCentroid&         nearest_centroid,
-    const Cluster<ParticleType>* clusters,
+    const ParticleType&                      particle,
+    OUT NearestCentroid&                     nearest_centroid,
+    const Cluster<Dimensions, ParticleType>* clusters,
     OUT detail::NearestCentroidList& cluster_subset,
     KMeansBuffers<Options>           buffers
 ) {
