@@ -202,7 +202,9 @@ void nbs::cluster::k_means(
     };
 
     std::ranges::sort(
-        std::span<ParticleType, Options.particle_count>(particles),
+        std::span<ParticleType, Options.particle_count>(
+            particles, Options.particle_count
+        ),
         std::less<>{},
         particle_to_cluster_idx
     );
