@@ -15,6 +15,8 @@ namespace nbs {
         };
 
         struct KMeansOptions {
+            ui32 particle_count                       = 1000;
+            ui32 cluster_count                        = 10;
             ui32 max_iterations                       = 100;
             ui32 acceptable_changes_per_iteration     = 0;
             bool front_loaded                         = false;
@@ -37,12 +39,10 @@ namespace nbs {
             ParticleType* centroids,
             ui32          centroid_count);
 
-        template <Particle ParticleType>
+        template <Particle ParticleType, KMeansOptions Options>
         void k_means(
-            const Cluster<ParticleType>* initial_clusters,
-            ui32                         initial_cluster_count,
-            const KMeansOptions&         options,
-            OUT Cluster<ParticleType>*& clusters
+            IN CALLER_DELETE const Cluster<ParticleType>* initial_clusters,
+            OUT CALLER_DELETE Cluster<ParticleType>* final_clusters
         );
 
         namespace impl {
