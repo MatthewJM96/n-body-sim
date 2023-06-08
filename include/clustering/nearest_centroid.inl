@@ -4,8 +4,9 @@ void nbs::cluster::detail::nearest_centroid(
     IN OUT NearestCentroid&      nearest_centroid,
     const Cluster<ParticleType>* clusters
 ) {
-    NBS_PRECISION new_distance_2_to_current_cluster
-        = math::distance2(particle - clusters[nearest_centroid.idx].centroid);
+    NBS_PRECISION new_distance_2_to_current_cluster = math::distance2(
+        particle.position, clusters[nearest_centroid.idx].centroid.position
+    );
 
     // Optimisation by early back out of search if previous nearest centroid has got
     // closer - in which case it is guaranteed to still be the nearest centroid.
@@ -25,8 +26,9 @@ void nbs::cluster::detail::nearest_centroid(
     for (ui32 cluster_idx = 0; cluster_idx < Options.cluster_count; ++cluster_idx) {
         if (cluster_idx == nearest_centroid.idx) continue;
 
-        NBS_PRECISION centroid_distance_2
-            = math::distance2(particle - clusters[cluster_idx].centroid);
+        NBS_PRECISION centroid_distance_2 = math::distance2(
+            particle.position, clusters[cluster_idx].centroid.position
+        );
 
         if (centroid_distance_2 < nearest_centroid.distance) {
             nearest_centroid.idx      = cluster_idx;
@@ -42,8 +44,9 @@ void nbs::cluster::detail::nearest_centroid_from_subset(
     const Cluster<ParticleType>* clusters,
     detail::NearestCentroidList  cluster_subset
 ) {
-    NBS_PRECISION new_distance_2_to_current_cluster
-        = math::distance2(particle - clusters[nearest_centroid.idx].centroid);
+    NBS_PRECISION new_distance_2_to_current_cluster = math::distance2(
+        particle.position, clusters[nearest_centroid.idx].centroid.position
+    );
 
     // Optimisation by early back out of search if previous nearest centroid has got
     // closer - in which case it is guaranteed to still be the nearest centroid.
@@ -68,8 +71,9 @@ void nbs::cluster::detail::nearest_centroid_from_subset(
 
         if (cluster_idx == nearest_centroid.idx) continue;
 
-        NBS_PRECISION centroid_distance_2
-            = math::distance2(particle - clusters[cluster_idx].centroid);
+        NBS_PRECISION centroid_distance_2 = math::distance2(
+            particle.position, clusters[cluster_idx].centroid.position
+        );
 
         if (centroid_distance_2 < nearest_centroid.distance) {
             nearest_centroid.idx      = cluster_idx;
@@ -96,7 +100,9 @@ void nbs::cluster::detail::nearest_centroid_and_build_list(
 
     // Transformer from index to distance to particle building the cluster subset for.
     auto index_to_distance = [&particle, &clusters](ui32 idx) {
-        return math::distance2(particle.position - clusters[idx].centroid.position);
+        return math::distance2(
+            particle.position.position, clusters[idx].centroid.position.position
+        );
     };
 
     // Sort indices according to distance to particle.
@@ -111,6 +117,6 @@ void nbs::cluster::detail::nearest_centroid_and_build_list(
 
     nearest_centroid.idx      = buffers.nearest_centroid_indices[0];
     nearest_centroid.distance = math::distance2(
-        particle - clusters[buffers.nearest_centroid_indices[0]].centroid
+        particle, clusters[buffers.nearest_centroid_indices[0]].centroid.position
     );
 }
