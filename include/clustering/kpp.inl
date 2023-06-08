@@ -1,18 +1,15 @@
-template <nbs::ClusteredParticle ParticleType>
+template <nbs::ClusteredParticle ParticleType, nbs::cluster::KMeansOptions Options>
 void nbs::cluster::kpp(
-    ParticleType* particles,
-    ui32          particle_count,
-    ParticleType* centroids,
-    ui32          centroid_count
+    const ParticleType* particles, IN OUT Cluster<ParticleType>* clusters
 ) {
     /************
        Set up metadata for k++ algorithm.
                                 ************/
 
     ui32  number_of_particles_chosen  = 1;
-    bool* particle_chosen_as_centroid = new bool[particle_count];
+    bool* particle_chosen_as_centroid = new bool[Options.particle_count];
 
-    NBS_PRECISION* cumulative_distance_2s = new NBS_PRECISION[particle_count];
+    NBS_PRECISION* cumulative_distance_2s = new NBS_PRECISION[Options.particle_count];
     NBS_PRECISION  total_distance_2       = 0.0;
 
     std::default_random_engine generator;
@@ -22,10 +19,10 @@ void nbs::cluster::kpp(
                                 ************/
 
     {
-        std::uniform_int_distribution<ui32> distribution(0, particle_count - 1);
+        std::uniform_int_distribution<ui32> distribution(0, Options.particle_count - 1);
         ui32                                initial_choice = distribution(generator);
 
-        centroids[0]                                = particles[initial_choice];
+        clusters[0].centroid                        = particles[initial_choice];
         particle_chosen_as_centroid[initial_choice] = true;
     }
 
@@ -33,7 +30,7 @@ void nbs::cluster::kpp(
        Perform k++ algorithm for each subsequent centroid.
                                                  ************/
 
-    for (ui32 centroid_idx = 1; centroid_idx < centroid_count; ++centroid_idx) {
+    for (ui32 cluster_idx = 1; cluster_idx < Options.cluster_count; ++cluster_idx) {
         //
         // For each particle of the dataset not so far chosen as a centroid, determine
         // the minimum distance to a chosen centroid and select one of those particles
@@ -42,7 +39,9 @@ void nbs::cluster::kpp(
         //
 
         // Calculate distances for each particle not so far chosen as a centroid.
-        for (ui32 particle_idx = 0; particle_idx < particle_count; ++particle_idx) {
+        for (ui32 particle_idx = 0; particle_idx < Options.particle_count;
+             ++particle_idx)
+        {
             // Skip particles already chosen as a centroid.
             if (particle_chosen_as_centroid[particle_idx]) {
                 cumulative_distance_2s[particle_idx]
@@ -53,11 +52,12 @@ void nbs::cluster::kpp(
             // Calculate distance to nearest chosen centroid.
             NBS_PRECISION minimum_distance_2_to_chosen_centroids
                 = std::numeric_limits<NBS_PRECISION>::max();
-            for (ui32 chosen_centroid_idx = 0; chosen_centroid_idx < centroid_idx;
-                 ++chosen_centroid_idx)
+            for (ui32 chosen_cluster_idx = 0; chosen_cluster_idx < cluster_idx;
+                 ++chosen_cluster_idx)
             {
                 NBS_PRECISION distance_2_to_chosen_centroid = math::distance2(
-                    particles[particle_idx] - centroids[chosen_centroid_idx]
+                    particles[particle_idx].position
+                    - clusters[chosen_cluster_idx].centroid.position
                 );
 
                 if (distance_2_to_chosen_centroid
@@ -87,9 +87,11 @@ void nbs::cluster::kpp(
         );
         NBS_PRECISION choice = distribution(generator);
 
-        for (ui32 particle_idx = 0; particle_idx < particle_count; ++particle_idx) {
+        for (ui32 particle_idx = 0; particle_idx < Options.particle_count;
+             ++particle_idx)
+        {
             if (cumulative_distance_2s[particle_idx] > choice) {
-                centroids[centroid_idx]                   = particles[particle_idx];
+                clusters[cluster_idx].centroid            = particles[particle_idx];
                 particle_chosen_as_centroid[particle_idx] = true;
             }
         }

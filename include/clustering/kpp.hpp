@@ -7,12 +7,8 @@
 
 namespace nbs {
     namespace cluster {
-        template <ClusteredParticle ParticleType>
-        void
-        kpp(ParticleType* particles,
-            ui32          particle_count,
-            ParticleType* centroids,
-            ui32          centroid_count);
+        template <ClusteredParticle ParticleType, KMeansOptions Options>
+        void kpp(const ParticleType* particles, IN OUT Cluster<ParticleType>* clusters);
     }  // namespace cluster
 }  // namespace nbs
 
