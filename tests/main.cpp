@@ -1,6 +1,14 @@
 #include "stdafx.h"
 
+#include <GL/gl.h>
+#include <GLFW/glfw3.h>
+#include <imgui.h>
+#include <implot.h>
+
 #include "clustering/clustering.hpp"
+
+#include "backends/imgui_impl_glfw.h"
+#include "backends/imgui_impl_opengl3.h"
 
 using namespace nbs;
 
@@ -15,13 +23,15 @@ struct MyParticle {
 };
 
 template <size_t ParticleCount, size_t ClusterCount>
-void do_a_cluster_job_dim_2() {
+void do_a_cluster_job_dim_2(
+    MyParticle2D*& particles, cluster::Cluster<2, MyParticle2D>*& clusters
+) {
     constexpr cluster::KMeansOptions options = { .particle_count = ParticleCount,
                                                  .cluster_count  = ClusterCount,
                                                  .front_loaded   = true };
 
     // Allocate particles.
-    MyParticle2D* particles = new MyParticle2D[ParticleCount];
+    particles = new MyParticle2D[ParticleCount];
 
     // Set up particles.
     std::default_random_engine          generator;
@@ -32,8 +42,7 @@ void do_a_cluster_job_dim_2() {
     }
 
     // Allocate clusters.
-    cluster::Cluster<2, MyParticle2D>* clusters
-        = new cluster::Cluster<2, MyParticle2D>[ClusterCount * 2];
+    clusters = new cluster::Cluster<2, MyParticle2D>[ClusterCount * 2];
 
     // Do kpp initialisation.
     cluster::kpp<2, MyParticle2D, options>(particles, clusters);
@@ -131,11 +140,94 @@ void do_a_cluster_job_dim_3() {
 }
 
 int main() {
+    MyParticle2D*                      particles;
+    cluster::Cluster<2, MyParticle2D>* clusters;
+
+#define PARTICLE_COUNT 1000
+#define CLUSTER_COUNT  10
+
+    // std::cout << glGetString(GL_VERSION) << std::endl;
+
     std::cout << "2D case:" << std::endl;
-    do_a_cluster_job_dim_2<1000, 10>();
+    do_a_cluster_job_dim_2<PARTICLE_COUNT, CLUSTER_COUNT>(particles, clusters);
 
     std::cout << std::endl << std::endl;
 
     std::cout << "3D case:" << std::endl;
-    do_a_cluster_job_dim_3<1000, 10>();
+    do_a_cluster_job_dim_3<PARTICLE_COUNT, CLUSTER_COUNT>();
+
+    glfwInit();
+
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    GLFWwindow* window = glfwCreateWindow(1000, 800, "My Window", nullptr, nullptr);
+
+    glfwMakeContextCurrent(window);
+
+    IMGUI_CHECKVERSION();
+
+    auto gui_ctx = ImGui::CreateContext();
+
+    ImGui_ImplGlfw_InitForOpenGL(window, false);
+    ImGui_ImplOpenGL3_Init();
+
+    auto plt_ctx = ImPlot::CreateContext();
+
+    ImGui::SetCurrentContext(gui_ctx);
+    ImPlot::SetCurrentContext(plt_ctx);
+
+    while (!glfwWindowShouldClose(window)) {
+        glfwPollEvents();
+        glClearColor(0.45f, 0.55f, 0.60f, 1.00f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        ImGui::SetNextWindowSize(ImVec2(1600, 1400));
+        if (ImGui::Begin("My SubWindow")) {
+            if (ImPlot::BeginPlot("My Plot")) {
+                ImPlot::PlotScatterG(
+                    "particles",
+                    [](int idx, void* data) {
+                        auto particle = reinterpret_cast<MyParticle2D*>(data)[idx];
+                        ImPlotPoint p = { particle.position.x, particle.position.y };
+                        return p;
+                    },
+                    reinterpret_cast<void*>(particles),
+                    PARTICLE_COUNT
+                );
+
+                ImPlot::SetNextMarkerStyle(ImPlotMarker_Diamond, 6.0f);
+                ImPlot::PlotScatterG(
+                    "centroids",
+                    [](int idx, void* data) {
+                        auto cluster
+                            = reinterpret_cast<cluster::Cluster<2, MyParticle2D>*>(data
+                            )[idx];
+                        ImPlotPoint p = { cluster.centroid.position.x,
+                                          cluster.centroid.position.y };
+                        return p;
+                    },
+                    reinterpret_cast<void*>(clusters + CLUSTER_COUNT),
+                    CLUSTER_COUNT
+                );
+
+                ImPlot::EndPlot();
+            }
+            ImGui::End();
+        }
+
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+        int display_w, display_h;
+        glfwGetFramebufferSize(window, &display_w, &display_h);
+        glViewport(0, 0, display_w, display_h);
+        glfwSwapBuffers(window);
+    }
+
+    ImPlot::DestroyContext(plt_ctx);
+    ImGui::DestroyContext(gui_ctx);
 }

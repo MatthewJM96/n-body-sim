@@ -92,6 +92,8 @@ endif()
 
 set(NBS_Requirements
     glm/0.9.9.8
+    glew/2.2.0
+    glfw/3.3.8
     imgui/1.89.4
     implot/0.14
 )
@@ -110,6 +112,9 @@ conan_cmake_install(PATH_OR_REFERENCE .
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_BINARY_DIR}")
 
 find_package(glm REQUIRED)
+find_package(OpenGL REQUIRED)
+find_package(GLEW REQUIRED)
+find_package(glfw3 REQUIRED)
 find_package(imgui REQUIRED)
 find_package(implot REQUIRED)
 
@@ -119,6 +124,8 @@ endif()
 
 add_executable(NBS
     "${PROJECT_SOURCE_DIR}/src/stdafx.cpp"
+    "${PROJECT_SOURCE_DIR}/tests/backends/imgui_impl_glfw.cpp"
+    "${PROJECT_SOURCE_DIR}/tests/backends/imgui_impl_opengl3.cpp"
     "${PROJECT_SOURCE_DIR}/tests/main.cpp"
 )
 
@@ -129,6 +136,7 @@ target_precompile_headers(NBS
 
 set(NBS_Include_Dirs
     ${glm_INCLUDE_DIRS}
+    ${glfw_INCLUDE_DIRS}
     ${imgui_INCLUDE_DIRS}
     ${implot_INCLUDE_DIRS}
 )
@@ -223,7 +231,14 @@ target_include_directories(NBS
 #     endif()
 # endif()
 
-target_link_libraries(NBS imgui::imgui implot::implot)
+target_link_libraries(NBS GLEW::GLEW)
+if (UNIX OR MINGW)
+    target_link_libraries(NBS GL)
+elseif (MSVC)
+    target_link_libraries(NBS OpenGL32)
+endif()
+
+target_link_libraries(NBS glfw::glfw imgui::imgui implot::implot)
 
 if(NBS_ENABLE_GPERF_PROFILER)
     target_link_libraries(NBS profiler)
