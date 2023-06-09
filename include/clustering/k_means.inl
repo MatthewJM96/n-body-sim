@@ -148,7 +148,7 @@ void nbs::cluster::k_means(
                                       .position[dim];
                     }
 
-                    final_clusters[nearest_centroid.idx].particle_count = 0;
+                    final_clusters[nearest_centroid.idx].particle_count = 1;
 
                     buffers.cluster_modified_in_iteration[nearest_centroid.idx] = true;
                 } else {
