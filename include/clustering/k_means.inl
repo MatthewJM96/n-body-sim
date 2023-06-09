@@ -95,9 +95,7 @@ void nbs::cluster::k_means(
                     if constexpr (Options.centroid_subset.do_rebuild) {
                         if (iterations == 0)
                             detail::nearest_centroid<Dimensions, ParticleType, Options>(
-                                particles
-                                    [initial_cluster.particle_offset
-                                     + in_cluster_particle_idx],
+                                particles[global_particle_idx],
                                 nearest_centroid,
                                 final_clusters
                             );
@@ -106,9 +104,7 @@ void nbs::cluster::k_means(
                                 Dimensions,
                                 ParticleType,
                                 Options>(
-                                particles
-                                    [initial_cluster.particle_offset
-                                     + in_cluster_particle_idx],
+                                particles[global_particle_idx],
                                 nearest_centroid,
                                 final_clusters,
                                 buffers.nearest_centroids_lists[global_particle_idx]
@@ -118,9 +114,7 @@ void nbs::cluster::k_means(
                                 Dimensions,
                                 ParticleType,
                                 Options>(
-                                particles
-                                    [initial_cluster.particle_offset
-                                     + in_cluster_particle_idx],
+                                particles[global_particle_idx],
                                 nearest_centroid,
                                 final_clusters,
                                 buffers.nearest_centroids_lists[global_particle_idx]
@@ -131,9 +125,7 @@ void nbs::cluster::k_means(
                             Dimensions,
                             ParticleType,
                             Options>(
-                            particles
-                                [initial_cluster.particle_offset
-                                 + in_cluster_particle_idx],
+                            particles[global_particle_idx],
                             nearest_centroid,
                             final_clusters,
                             buffers.nearest_centroids_lists[global_particle_idx]
@@ -141,10 +133,7 @@ void nbs::cluster::k_means(
                     }
                 } else {
                     detail::nearest_centroid<Dimensions, ParticleType, Options>(
-                        particles
-                            [initial_cluster.particle_offset + in_cluster_particle_idx],
-                        nearest_centroid,
-                        final_clusters
+                        particles[global_particle_idx], nearest_centroid, final_clusters
                     );
                 }
 
