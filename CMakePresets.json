@@ -40,7 +40,7 @@
                 "CMAKE_C_COMPILER": "gcc",
                 "CMAKE_CXX_COMPILER": "g++",
                 "CMAKE_BUILD_TYPE": "Debug",
-                "HEMLOCK_FAST_DEBUG": "On"
+                "NBS_FAST_DEBUG": "On"
             },
             "condition": {
                 "type": "equals",
@@ -58,7 +58,7 @@
                 "CMAKE_C_COMPILER": "gcc",
                 "CMAKE_CXX_COMPILER": "g++",
                 "CMAKE_BUILD_TYPE": "Debug",
-                "HEMLOCK_SUPER_FAST_DEBUG": "On"
+                "NBS_SUPER_FAST_DEBUG": "On"
             },
             "condition": {
                 "type": "equals",
@@ -76,7 +76,7 @@
                 "CMAKE_C_COMPILER": "gcc",
                 "CMAKE_CXX_COMPILER": "g++",
                 "CMAKE_BUILD_TYPE": "Debug",
-                "HEMLOCK_HYPER_FAST_DEBUG": "On"
+                "NBS_HYPER_FAST_DEBUG": "On"
             },
             "condition": {
                 "type": "equals",
@@ -111,8 +111,8 @@
                 "CMAKE_C_COMPILER": "gcc",
                 "CMAKE_CXX_COMPILER": "g++",
                 "CMAKE_BUILD_TYPE": "Debug",
-                "HEMLOCK_FAST_DEBUG": "On",
-                "HEMLOCK_ENABLE_ADDRESS_SANITIZER": "On"
+                "NBS_FAST_DEBUG": "On",
+                "NBS_ENABLE_ADDRESS_SANITIZER": "On"
             },
             "condition": {
                 "type": "equals",
@@ -123,14 +123,15 @@
         {
             "name": "GCC-x64-Asan-Slow",
             "displayName": "GCC x64 Address Sanitizer (Slow)",
-            "description": "Configuration for GCC x64 with address sanitizer build (no optimisation).",
+            "description":
+                "Configuration for GCC x64 with address sanitizer build (no optimisation).",
             "inherits": "base",
             "generator": "Unix Makefiles",
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "gcc",
                 "CMAKE_CXX_COMPILER": "g++",
                 "CMAKE_BUILD_TYPE": "Debug",
-                "HEMLOCK_ENABLE_ADDRESS_SANITIZER": "On"
+                "NBS_ENABLE_ADDRESS_SANITIZER": "On"
             },
             "condition": {
                 "type": "equals",
@@ -165,7 +166,7 @@
                 "CMAKE_C_COMPILER": "clang",
                 "CMAKE_CXX_COMPILER": "clang++",
                 "CMAKE_BUILD_TYPE": "Debug",
-                "HEMLOCK_FAST_DEBUG": "On"
+                "NBS_FAST_DEBUG": "On"
             },
             "condition": {
                 "type": "equals",
@@ -200,7 +201,7 @@
                 "CMAKE_C_COMPILER": "clang",
                 "CMAKE_CXX_COMPILER": "clang++",
                 "CMAKE_BUILD_TYPE": "Release",
-                "HEMLOCK_ENABLE_ADDRESS_SANITIZER": "On"
+                "NBS_ENABLE_ADDRESS_SANITIZER": "On"
             },
             "condition": {
                 "type": "equals",
@@ -218,7 +219,7 @@
                 "CMAKE_C_COMPILER": "clang",
                 "CMAKE_CXX_COMPILER": "clang++",
                 "CMAKE_BUILD_TYPE": "Debug",
-                "HEMLOCK_ENABLE_THREAD_SANITIZER": "On"
+                "NBS_ENABLE_THREAD_SANITIZER": "On"
             },
             "condition": {
                 "type": "equals",
@@ -236,7 +237,7 @@
                 "CMAKE_C_COMPILER": "clang",
                 "CMAKE_CXX_COMPILER": "clang++",
                 "CMAKE_BUILD_TYPE": "Debug",
-                "HEMLOCK_ENABLE_MEMORY_SANITIZER": "On"
+                "NBS_ENABLE_MEMORY_SANITIZER": "On"
             },
             "condition": {
                 "type": "equals",
@@ -254,7 +255,7 @@
                 "CMAKE_C_COMPILER": "clang",
                 "CMAKE_CXX_COMPILER": "clang++",
                 "CMAKE_BUILD_TYPE": "Release",
-                "HEMLOCK_ENABLE_GPERF_PROFILER": "On"
+                "NBS_ENABLE_GPERF_PROFILER": "On"
             },
             "condition": {
                 "type": "equals",
@@ -430,7 +431,8 @@
         {
             "name": "GCC-x64-Asan-Slow",
             "displayName": "GCC x64 Address Sanitizer (Slow)",
-            "description": "Configuration for GCC x64 with address sanitizer build (no optimisation).",
+            "description":
+                "Configuration for GCC x64 with address sanitizer build (no optimisation).",
             "configurePreset": "GCC-x64-Asan",
             "condition": {
                 "type": "equals",
