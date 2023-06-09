@@ -190,6 +190,8 @@ void nbs::cluster::k_means(
                 /= static_cast<NBS_PRECISION>(final_clusters[cluster_idx].particle_count
                 );
         }
+
+        debug_printf("Changes in iteration: %d\n", changes_in_iteration);
     } while (changes_in_iteration > Options.acceptable_changes_per_iteration);
 
     // Once we are done figuring how many particles are in each of the clusters, update
