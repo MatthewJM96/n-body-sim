@@ -16,6 +16,20 @@
 
 using namespace nbs;
 
+// TODO(Matthew): Make timing more robust.
+// TODO(Matthew): Implement a test case of clustering, then moving particles, and then
+//                timing the reclustering after this. Parameterise the degree of
+//                particle movement and get a vibe of the consequence of more or less
+//                movement.
+// TODO(Matthew): Implement larger test cases and trial optimisations.
+// TODO(Matthew): Implement retrialing kpp over X attempts to find best seeding.
+//                  Do the same with kpp + k_means combined? Ultimately for simulation
+//                  our first centroids must be GOOD.
+// TODO(Matthew): Validate that particle motion doesn't sufficiently screw up the best
+//                centroids that the time to get them isn't worth it.
+// TODO(Matthew): Write a first-pass force update for particles.
+// TODO(Matthew): Write one or two nice distributions for particles.
+
 struct MyParticle2D {
     f32v2  position;
     size_t cluster_metadata_idx;
