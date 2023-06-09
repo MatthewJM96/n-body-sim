@@ -109,9 +109,7 @@ void nbs::cluster::detail::nearest_centroid_and_build_list(
 
     // Transformer from index to distance to particle building the cluster subset for.
     auto index_to_distance = [&particle, &clusters](ui32 idx) {
-        return math::distance2(
-            particle.position.position, clusters[idx].centroid.position.position
-        );
+        return math::distance2(particle.position, clusters[idx].centroid.position);
     };
 
     // Sort indices according to distance to particle.
