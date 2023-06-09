@@ -9,3 +9,4 @@ data/
 
 # Artifacts
 build/
+imgui.ini
