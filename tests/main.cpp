@@ -185,9 +185,9 @@ int main() {
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        ImGui::SetNextWindowSize(ImVec2(1600, 1400));
+        ImGui::SetNextWindowSize(ImVec2(1600, 1200));
         if (ImGui::Begin("My SubWindow")) {
-            if (ImPlot::BeginPlot("My Plot")) {
+            if (ImPlot::BeginPlot("My Plot", ImVec2(1500, 1100))) {
                 ImPlot::PlotScatterG(
                     "particles",
                     [](int idx, void* data) {
