@@ -80,8 +80,10 @@ void nbs::cluster::k_means(
                 //     the nearest centroid, with calculation performed the first
                 //     time over all centroids.
                 if constexpr (Options.front_loaded) {
-                    nearest_centroid.distance
-                        = std::numeric_limits<NBS_PRECISION>::min();
+                    if (iterations == 0) {
+                        nearest_centroid.distance
+                            = std::numeric_limits<NBS_PRECISION>::min();
+                    }
                 }
 
                 //
