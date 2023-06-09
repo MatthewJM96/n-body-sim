@@ -1,5 +1,7 @@
 #include "stdafx.h"
 
+#include <chrono>
+
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
 #include <imgui.h>
@@ -35,6 +37,8 @@ void do_a_cluster_job_a1(
             .front_loaded                      = true,
             .approaching_centroid_optimisation = false };
 
+    const int iterations = 1000;
+
     // Allocate particles.
     particles = new MyParticle2D[7500];
 
@@ -47,39 +51,52 @@ void do_a_cluster_job_a1(
     // Allocate clusters.
     clusters = new cluster::Cluster<2, MyParticle2D>[ClusterCount * 2];
 
-    // Do kpp initialisation.
-    cluster::kpp<2, MyParticle2D, options>(particles, clusters);
+    nbs::i64 total_us = 0;
+    for (int iteration = 0; iteration < iterations; ++iteration) {
+        // Do kpp initialisation.
+        cluster::kpp<2, MyParticle2D, options>(particles, clusters);
 
-    // Quick check.
-    std::cout << "    kpp centroids:" << std::endl;
-    // clang-format off
-    for (size_t i = 0; i < ClusterCount; ++i) {
-        std::cout << "        " << clusters[i].centroid.position.x << " - "
-                                << clusters[i].centroid.position.y << std::endl;
+        // // Quick check.
+        // std::cout << "    kpp centroids:" << std::endl;
+        // // clang-format off
+        // for (size_t i = 0; i < ClusterCount; ++i) {
+        //     std::cout << "        " << clusters[i].centroid.position.x << " - "
+        //                             << clusters[i].centroid.position.y << std::endl;
+        // }
+        // // clang-format on
+
+        // Front load into first cluster.
+        clusters[0].particle_count  = 7500;
+        clusters[0].particle_offset = 0;
+
+        // Allocate buffers used for K-means.
+        cluster::KMeansBuffers<options> buffers;
+        cluster::allocate_kmeans_buffers<options>(buffers);
+
+        auto start = std::chrono::high_resolution_clock::now();
+        // Do k_means.
+        cluster::k_means<2, MyParticle2D, options>(
+            particles, clusters, clusters + ClusterCount, buffers
+        );
+        auto duration = std::chrono::high_resolution_clock::now() - start;
+        total_us
+            += std::chrono::duration_cast<std::chrono::microseconds>(duration).count();
     }
-    // clang-format on
 
-    // Front load into first cluster.
-    clusters[0].particle_count  = 7500;
-    clusters[0].particle_offset = 0;
+    std::cout << "Average time to cluster: "
+              << static_cast<f32>(total_us) / static_cast<f32>(iterations) << "us"
+              << std::endl;
 
-    // Allocate buffers used for K-means.
-    cluster::KMeansBuffers<options> buffers;
-    cluster::allocate_kmeans_buffers<options>(buffers);
-
-    // Do k_means.
-    cluster::k_means<2, MyParticle2D, options>(
-        particles, clusters, clusters + ClusterCount, buffers
-    );
-
-    // Quick check.
-    std::cout << "    k_means centroids:" << std::endl;
-    // clang-format off
-    for (size_t i = 0; i < ClusterCount; ++i) {
-        std::cout << "        " << clusters[i + ClusterCount].centroid.position.x << " - "
-                                << clusters[i + ClusterCount].centroid.position.y << std::endl;
-    }
-    // clang-format on
+    // // Quick check.
+    // std::cout << "    k_means centroids:" << std::endl;
+    // // clang-format off
+    // for (size_t i = 0; i < ClusterCount; ++i) {
+    //     std::cout << "        " << clusters[i + ClusterCount].centroid.position.x <<
+    //     " - "
+    //                             << clusters[i + ClusterCount].centroid.position.y <<
+    //                             std::endl;
+    // }
+    // // clang-format on
 }
 
 template <size_t ParticleCount, size_t ClusterCount>
