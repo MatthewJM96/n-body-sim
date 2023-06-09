@@ -6,7 +6,7 @@ template <
     nbs::cluster::KMeansOptions        Options>
 void nbs::cluster::k_means(
     IN OUT CALLER_DELETE ParticleType* particles,
-    IN CALLER_DELETE const Cluster<Dimensions, ParticleType>* initial_clusters,
+    IN OUT CALLER_DELETE Cluster<Dimensions, ParticleType>* initial_clusters,
     OUT CALLER_DELETE Cluster<Dimensions, ParticleType>* final_clusters,
     IN OUT KMeansBuffers<Options> buffers
 ) {
@@ -60,7 +60,7 @@ void nbs::cluster::k_means(
              ++initial_cluster_idx)
         {
             // Get handle on cluster we're looking at.
-            const Cluster<Dimensions, ParticleType>& initial_cluster
+            Cluster<Dimensions, ParticleType>& initial_cluster
                 = initial_clusters[initial_cluster_idx];
 
             for (ui32 in_cluster_particle_idx = 0;
@@ -97,7 +97,7 @@ void nbs::cluster::k_means(
                             detail::nearest_centroid<Dimensions, ParticleType, Options>(
                                 particles[global_particle_idx],
                                 nearest_centroid,
-                                final_clusters
+                                initial_clusters
                             );
                         else if (iterations == 1) {
                             detail::nearest_centroid_and_build_list<
@@ -106,7 +106,7 @@ void nbs::cluster::k_means(
                                 Options>(
                                 particles[global_particle_idx],
                                 nearest_centroid,
-                                final_clusters,
+                                initial_clusters,
                                 buffers.nearest_centroids_lists[global_particle_idx]
                             );
                         } else {
@@ -116,7 +116,7 @@ void nbs::cluster::k_means(
                                 Options>(
                                 particles[global_particle_idx],
                                 nearest_centroid,
-                                final_clusters,
+                                initial_clusters,
                                 buffers.nearest_centroids_lists[global_particle_idx]
                             );
                         }
@@ -127,13 +127,15 @@ void nbs::cluster::k_means(
                             Options>(
                             particles[global_particle_idx],
                             nearest_centroid,
-                            final_clusters,
+                            initial_clusters,
                             buffers.nearest_centroids_lists[global_particle_idx]
                         );
                     }
                 } else {
                     detail::nearest_centroid<Dimensions, ParticleType, Options>(
-                        particles[global_particle_idx], nearest_centroid, final_clusters
+                        particles[global_particle_idx],
+                        nearest_centroid,
+                        initial_clusters
                     );
                 }
 
@@ -174,6 +176,9 @@ void nbs::cluster::k_means(
             final_clusters[cluster_idx].centroid.position
                 /= static_cast<NBS_PRECISION>(final_clusters[cluster_idx].particle_count
                 );
+
+            initial_clusters[cluster_idx].centroid
+                = final_clusters[cluster_idx].centroid;
         }
 
         debug_printf("Changes in iteration: %d\n", changes_in_iteration);

@@ -17,7 +17,7 @@ namespace nbs {
             KMeansOptions                 Options>
         void k_means(
             IN OUT CALLER_DELETE ParticleType* particles,
-            IN CALLER_DELETE const Cluster<Dimensions, ParticleType>* initial_clusters,
+            IN OUT CALLER_DELETE Cluster<Dimensions, ParticleType>* initial_clusters,
             OUT CALLER_DELETE Cluster<Dimensions, ParticleType>* final_clusters,
             IN OUT KMeansBuffers<Options> buffers
         );
