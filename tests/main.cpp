@@ -10,6 +10,8 @@
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
 
+#include "data/a1.hpp"
+
 using namespace nbs;
 
 struct MyParticle2D {
@@ -22,12 +24,71 @@ struct MyParticle {
     size_t cluster_metadata_idx;
 };
 
+template <size_t ClusterCount>
+void do_a_cluster_job_a1(
+    MyParticle2D*& particles, cluster::Cluster<2, MyParticle2D>*& clusters
+) {
+    constexpr cluster::KMeansOptions options
+        = { .particle_count                    = 7500,
+            .cluster_count                     = ClusterCount,
+            .max_iterations                    = 100,
+            .front_loaded                      = true,
+            .approaching_centroid_optimisation = false };
+
+    // Allocate particles.
+    particles = new MyParticle2D[7500];
+
+    // Set up particles.
+    for (size_t i = 0; i < 7500; ++i) {
+        particles[i].cluster_metadata_idx = i;
+        particles[i].position             = A1_DATA[i];
+    }
+
+    // Allocate clusters.
+    clusters = new cluster::Cluster<2, MyParticle2D>[ClusterCount * 2];
+
+    // Do kpp initialisation.
+    cluster::kpp<2, MyParticle2D, options>(particles, clusters);
+
+    // Quick check.
+    std::cout << "    kpp centroids:" << std::endl;
+    // clang-format off
+    for (size_t i = 0; i < ClusterCount; ++i) {
+        std::cout << "        " << clusters[i].centroid.position.x << " - "
+                                << clusters[i].centroid.position.y << std::endl;
+    }
+    // clang-format on
+
+    // Front load into first cluster.
+    clusters[0].particle_count  = 7500;
+    clusters[0].particle_offset = 0;
+
+    // Allocate buffers used for K-means.
+    cluster::KMeansBuffers<options> buffers;
+    cluster::allocate_kmeans_buffers<options>(buffers);
+
+    // Do k_means.
+    cluster::k_means<2, MyParticle2D, options>(
+        particles, clusters, clusters + ClusterCount, buffers
+    );
+
+    // Quick check.
+    std::cout << "    k_means centroids:" << std::endl;
+    // clang-format off
+    for (size_t i = 0; i < ClusterCount; ++i) {
+        std::cout << "        " << clusters[i + ClusterCount].centroid.position.x << " - "
+                                << clusters[i + ClusterCount].centroid.position.y << std::endl;
+    }
+    // clang-format on
+}
+
 template <size_t ParticleCount, size_t ClusterCount>
 void do_a_cluster_job_dim_2(
     MyParticle2D*& particles, cluster::Cluster<2, MyParticle2D>*& clusters
 ) {
     constexpr cluster::KMeansOptions options = { .particle_count = ParticleCount,
                                                  .cluster_count  = ClusterCount,
+                                                 .max_iterations = 100,
                                                  .front_loaded   = true };
 
     // Allocate particles.
@@ -153,6 +214,11 @@ int main() {
 
     std::cout << std::endl << std::endl;
 
+    std::cout << "2D A1 case:" << std::endl;
+    do_a_cluster_job_a1<50>(particles, clusters);
+
+    std::cout << std::endl << std::endl;
+
     std::cout << "3D case:" << std::endl;
     do_a_cluster_job_dim_3<PARTICLE_COUNT, CLUSTER_COUNT>();
 
@@ -196,7 +262,7 @@ int main() {
                         return p;
                     },
                     reinterpret_cast<void*>(particles),
-                    PARTICLE_COUNT
+                    7500
                 );
 
                 ImPlot::SetNextMarkerStyle(ImPlotMarker_Diamond, 6.0f);
@@ -210,8 +276,8 @@ int main() {
                                           cluster.centroid.position.y };
                         return p;
                     },
-                    reinterpret_cast<void*>(clusters + CLUSTER_COUNT),
-                    CLUSTER_COUNT
+                    reinterpret_cast<void*>(clusters + 50),
+                    50
                 );
 
                 ImPlot::EndPlot();

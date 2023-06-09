@@ -5,7 +5,7 @@
 deps/
 
 # Working directory.
-data/
+./data/
 
 # Artifacts
 build/
