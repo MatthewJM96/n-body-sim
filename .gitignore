@@ -10,3 +10,5 @@ deps/
 # Artifacts
 build/
 imgui.ini
+*.callgrind
+*.prof
