@@ -13,7 +13,12 @@ void nbs::cluster::kpp(
 
     NBS_PRECISION* cumulative_distance_2s = new NBS_PRECISION[Options.particle_count]{};
 
+#if !defined(DEBUG)
+    std::random_device         rand_dev;
+    std::default_random_engine generator(rand_dev());
+#else
     std::default_random_engine generator;
+#endif
 
     /************
        Make initial choice of a centroid.
