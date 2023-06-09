@@ -142,10 +142,7 @@ void nbs::cluster::k_means(
                 if (!buffers.cluster_modified_in_iteration[nearest_centroid.idx]) {
                     for (size_t dim = 0; dim < Dimensions; ++dim) {
                         final_clusters[nearest_centroid.idx].centroid.position[dim]
-                            = particles
-                                  [initial_cluster.particle_offset
-                                   + in_cluster_particle_idx]
-                                      .position[dim];
+                            = particles[global_particle_idx].position[dim];
                     }
 
                     final_clusters[nearest_centroid.idx].particle_count = 1;
@@ -154,10 +151,7 @@ void nbs::cluster::k_means(
                 } else {
                     for (size_t dim = 0; dim < Dimensions; ++dim) {
                         final_clusters[nearest_centroid.idx].centroid.position[dim]
-                            += particles
-                                   [initial_cluster.particle_offset
-                                    + in_cluster_particle_idx]
-                                       .position[dim];
+                            += particles[global_particle_idx].position[dim];
                     }
 
                     ++(final_clusters[nearest_centroid.idx].particle_count);
