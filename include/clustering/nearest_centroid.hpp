@@ -40,7 +40,7 @@ namespace nbs {
                 const ParticleType&                      particle,
                 OUT NearestCentroid&                     nearest_centroid,
                 const Cluster<Dimensions, ParticleType>* clusters,
-                OUT NearestCentroidList                  cluster_subset,
+                OUT NearestCentroidList&                 cluster_subset,
                 KMeansBuffers<Options>                   buffers
             );
         };  // namespace detail
