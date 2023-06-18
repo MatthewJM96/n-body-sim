@@ -2,15 +2,10 @@
 
 #include <chrono>
 
-#include <GL/gl.h>
-#include <GLFW/glfw3.h>
-#include <imgui.h>
-#include <implot.h>
-
 #include "clustering/clustering.hpp"
 
-#include "backends/imgui_impl_glfw.h"
-#include "backends/imgui_impl_opengl3.h"
+#include "2D_clustering_viewer.hpp"
+#include "my_particles.hpp"
 
 #include "data/a1.hpp"
 
@@ -30,17 +25,7 @@ using namespace nbs;
 // TODO(Matthew): Write a first-pass force update for particles.
 // TODO(Matthew): Write one or two nice distributions for particles.
 
-struct MyParticle2D {
-    f32v2  position;
-    size_t cluster_metadata_idx;
-};
-
-struct MyParticle {
-    f32v3  position;
-    size_t cluster_metadata_idx;
-};
-
-template <size_t ClusterCount>
+template <size_t ClusterCount, size_t Iterations>
 void do_a_cluster_job_a1(
     MyParticle2D*& particles, cluster::Cluster<2, MyParticle2D>*& clusters
 ) {
@@ -50,8 +35,6 @@ void do_a_cluster_job_a1(
             .max_iterations                    = 100,
             .front_loaded                      = true,
             .approaching_centroid_optimisation = false };
-
-    const int iterations = 1000;
 
     // Allocate particles.
     particles = new MyParticle2D[7500];
@@ -66,7 +49,7 @@ void do_a_cluster_job_a1(
     clusters = new cluster::Cluster<2, MyParticle2D>[ClusterCount * 2];
 
     nbs::i64 total_us = 0;
-    for (int iteration = 0; iteration < iterations; ++iteration) {
+    for (int iteration = 0; iteration < Iterations; ++iteration) {
         // Do kpp initialisation.
         cluster::kpp<2, MyParticle2D, options>(particles, clusters);
 
@@ -97,9 +80,11 @@ void do_a_cluster_job_a1(
             += std::chrono::duration_cast<std::chrono::microseconds>(duration).count();
     }
 
-    std::cout << "Average time to cluster: "
-              << static_cast<f32>(total_us) / static_cast<f32>(iterations) << "us"
-              << std::endl;
+    if constexpr (Iterations != 1) {
+        std::cout << "Average time to cluster: "
+                  << static_cast<f32>(total_us) / static_cast<f32>(Iterations) << "us"
+                  << std::endl;
+    }
 
     // // Quick check.
     // std::cout << "    k_means centroids:" << std::endl;
@@ -231,100 +216,65 @@ void do_a_cluster_job_dim_3() {
     // clang-format on
 }
 
-int main() {
-    MyParticle2D*                      particles;
-    cluster::Cluster<2, MyParticle2D>* clusters;
-
+void do_2D_uniform_distribution_case() {
 #define PARTICLE_COUNT 1000
 #define CLUSTER_COUNT  10
 
-    // std::cout << glGetString(GL_VERSION) << std::endl;
+    MyParticle2D*                      particles;
+    cluster::Cluster<2, MyParticle2D>* clusters;
 
-    std::cout << "2D case:" << std::endl;
     do_a_cluster_job_dim_2<PARTICLE_COUNT, CLUSTER_COUNT>(particles, clusters);
 
-    std::cout << std::endl << std::endl;
+#undef PARTICLE_COUNT
+#undef CLUSTER_COUNT
+}
 
-    std::cout << "2D A1 case:" << std::endl;
-    do_a_cluster_job_a1<50>(particles, clusters);
+void do_3d_uniform_distribution_case() {
+#define PARTICLE_COUNT 1000
+#define CLUSTER_COUNT  10
 
-    std::cout << std::endl << std::endl;
-
-    std::cout << "3D case:" << std::endl;
     do_a_cluster_job_dim_3<PARTICLE_COUNT, CLUSTER_COUNT>();
 
-    glfwInit();
+#undef PARTICLE_COUNT
+#undef CLUSTER_COUNT
+}
 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    GLFWwindow* window = glfwCreateWindow(1000, 800, "My Window", nullptr, nullptr);
+void do_a1_dataset_case() {
+    MyParticle2D*                      particles;
+    cluster::Cluster<2, MyParticle2D>* clusters;
 
-    glfwMakeContextCurrent(window);
+    do_a_cluster_job_a1<50, 1>(particles, clusters);
 
-    IMGUI_CHECKVERSION();
+    make_2d_cluster_view(particles, clusters);
+}
 
-    auto gui_ctx = ImGui::CreateContext();
+void do_a1_dataset_performance_case() {
+    MyParticle2D*                      particles;
+    cluster::Cluster<2, MyParticle2D>* clusters;
 
-    ImGui_ImplGlfw_InitForOpenGL(window, false);
-    ImGui_ImplOpenGL3_Init();
+    do_a_cluster_job_a1<50, 1000>(particles, clusters);
 
-    auto plt_ctx = ImPlot::CreateContext();
+    make_2d_cluster_view(particles, clusters);
+}
 
-    ImGui::SetCurrentContext(gui_ctx);
-    ImPlot::SetCurrentContext(plt_ctx);
+int main() {
+    std::cout << "N-Body Simulator Menu:\n"
+                 "  - 2D Uniform Distribution Case (1)\n"
+                 "  - 3D Uniform Distribution Case (2)\n"
+                 "  - A1 Dataset Case              (3)\n"
+                 "  - A1 Dataset Performance Case  (4)\n"
+              << std::endl;
 
-    while (!glfwWindowShouldClose(window)) {
-        glfwPollEvents();
-        glClearColor(0.45f, 0.55f, 0.60f, 1.00f);
-        glClear(GL_COLOR_BUFFER_BIT);
+    char resp;
+    std::cin >> resp;
 
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
-
-        ImGui::SetNextWindowSize(ImVec2(1600, 1200));
-        if (ImGui::Begin("My SubWindow")) {
-            if (ImPlot::BeginPlot("My Plot", ImVec2(1500, 1100))) {
-                ImPlot::PlotScatterG(
-                    "particles",
-                    [](int idx, void* data) {
-                        auto particle = reinterpret_cast<MyParticle2D*>(data)[idx];
-                        ImPlotPoint p = { particle.position.x, particle.position.y };
-                        return p;
-                    },
-                    reinterpret_cast<void*>(particles),
-                    7500
-                );
-
-                ImPlot::SetNextMarkerStyle(ImPlotMarker_Diamond, 6.0f);
-                ImPlot::PlotScatterG(
-                    "centroids",
-                    [](int idx, void* data) {
-                        auto cluster
-                            = reinterpret_cast<cluster::Cluster<2, MyParticle2D>*>(data
-                            )[idx];
-                        ImPlotPoint p = { cluster.centroid.position.x,
-                                          cluster.centroid.position.y };
-                        return p;
-                    },
-                    reinterpret_cast<void*>(clusters + 50),
-                    50
-                );
-
-                ImPlot::EndPlot();
-            }
-            ImGui::End();
-        }
-
-        ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-        int display_w, display_h;
-        glfwGetFramebufferSize(window, &display_w, &display_h);
-        glViewport(0, 0, display_w, display_h);
-        glfwSwapBuffers(window);
+    if (resp == '1') {
+        do_2D_uniform_distribution_case();
+    } else if (resp == '2') {
+        do_3d_uniform_distribution_case();
+    } else if (resp == '3') {
+        do_a1_dataset_case();
+    } else if (resp == '4') {
+        do_a1_dataset_performance_case();
     }
-
-    ImPlot::DestroyContext(plt_ctx);
-    ImGui::DestroyContext(gui_ctx);
 }
