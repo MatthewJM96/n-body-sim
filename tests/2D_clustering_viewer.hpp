@@ -16,7 +16,9 @@
 #include "my_particles.hpp"
 
 void make_2d_cluster_view(
-    MyParticle2D* particles, nbs::cluster::Cluster<2, MyParticle2D>* clusters
+    MyParticle2D*                           particles,
+    nbs::cluster::Cluster<2, MyParticle2D>* clusters,
+    const nbs::f32v4*                       clip_rect = nullptr
 ) {
     glfwInit();
 
@@ -50,6 +52,11 @@ void make_2d_cluster_view(
         ImGui::SetNextWindowSize(ImVec2(1600, 1200));
         if (ImGui::Begin("My SubWindow")) {
             if (ImPlot::BeginPlot("My Plot", ImVec2(1500, 1100))) {
+                if (clip_rect)
+                    ImPlot::SetupAxesLimits(
+                        clip_rect->x, clip_rect->y, clip_rect->z, clip_rect->w
+                    );
+
                 ImPlot::PlotScatterG(
                     "particles",
                     [](int idx, void* data) {
