@@ -13,7 +13,8 @@ namespace nbs {
             KMeansOptions                 Options>
         void
         kpp(const ParticleType* particles,
-            IN OUT Cluster<Dimensions, ParticleType>* clusters);
+            IN OUT Cluster<Dimensions, ParticleType>* clusters,
+            ui32*                                     seed = nullptr);
     }  // namespace cluster
 }  // namespace nbs
 

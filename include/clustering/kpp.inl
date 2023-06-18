@@ -3,7 +3,9 @@ template <
     nbs::ClusteredParticle<Dimensions> ParticleType,
     nbs::cluster::KMeansOptions        Options>
 void nbs::cluster::kpp(
-    const ParticleType* particles, IN OUT Cluster<Dimensions, ParticleType>* clusters
+    const ParticleType* particles,
+    IN OUT Cluster<Dimensions, ParticleType>* clusters,
+    ui32*                                     seed /*= nullptr*/
 ) {
     /************
        Set up metadata for k++ algorithm.
@@ -13,12 +15,19 @@ void nbs::cluster::kpp(
 
     NBS_PRECISION* cumulative_distance_2s = new NBS_PRECISION[Options.particle_count]{};
 
+    ui32 _seed;
+    if (seed) {
+        _seed = *seed;
+    } else {
 #if !defined(DEBUG)
-    std::random_device         rand_dev;
-    std::default_random_engine generator(rand_dev());
+        std::random_device rand_dev;
+        _seed = rand_dev();
 #else
-    std::default_random_engine generator;
+        _seed = 42;
 #endif
+    }
+
+    std::default_random_engine generator(_seed);
 
     /************
        Make initial choice of a centroid.
