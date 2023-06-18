@@ -92,7 +92,7 @@ void do_a_cluster_job_a1(
         << "Average particle distance to cluster: "
         << statistics::
                calculate_average_cluster_distance<2, MyParticle2D, 7500, ClusterCount>(
-                   particles, clusters
+                   particles, clusters + ClusterCount
                )
         << std::endl;
 
