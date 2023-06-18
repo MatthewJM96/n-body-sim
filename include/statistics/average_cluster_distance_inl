@@ -6,7 +6,7 @@ nbs::f32 nbs::statistics::calculate_average_cluster_distance(ParticleType* parti
         const auto& cluster = clusters[cluster_idx];
 
         for (size_t offset = 0; offset < cluster.particle_count; ++offset) {
-            auto particle_idx = cluster.particle_offset;
+            auto particle_idx = cluster.particle_offset + offset;
 
             const auto& particle = particles[particle_idx];
 
