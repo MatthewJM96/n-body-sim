@@ -19,13 +19,13 @@ using namespace nbs;
 //                particle movement and get a vibe of the consequence of more or less
 //                movement.
 // TODO(Matthew): Implement larger test cases and trial optimisations.
-// TODO(Matthew): Implement retrialing kpp over X attempts to find best seeding.
-//                  Do the same with kpp + k_means combined? Ultimately for simulation
-//                  our first centroids must be GOOD.
 // TODO(Matthew): Validate that particle motion doesn't sufficiently screw up the best
 //                centroids that the time to get them isn't worth it.
 // TODO(Matthew): Write a first-pass force update for particles.
 // TODO(Matthew): Write one or two nice distributions for particles.
+// TODO(Matthew): Explore bisecting K-means (K-means for 2 centroids replacing each
+//                centroid in a current iteration, starting with 1 centroid over whole
+//                dataset).
 
 template <size_t ClusterCount, size_t Iterations>
 void do_a_cluster_job_a1(
