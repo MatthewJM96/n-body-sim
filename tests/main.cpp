@@ -9,6 +9,8 @@
 
 #include "data/a1.hpp"
 
+#include "statistics/average_cluster_distance.hpp"
+
 using namespace nbs;
 
 // TODO(Matthew): Make timing more robust.
@@ -85,6 +87,14 @@ void do_a_cluster_job_a1(
                   << static_cast<f32>(total_us) / static_cast<f32>(Iterations) << "us"
                   << std::endl;
     }
+
+    std::cout
+        << "Average particle distance to cluster: "
+        << statistics::
+               calculate_average_cluster_distance<2, MyParticle2D, 7500, ClusterCount>(
+                   particles, clusters
+               )
+        << std::endl;
 
     // // Quick check.
     // std::cout << "    k_means centroids:" << std::endl;

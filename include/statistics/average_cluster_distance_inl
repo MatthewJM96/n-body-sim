@@ -1,0 +1,18 @@
+template <size_t Dimensions, nbs::ClusteredParticle<Dimensions> ParticleType, size_t ParticleCount, size_t ClusterCount>
+nbs::f32 nbs::statistics::calculate_average_cluster_distance(ParticleType* particles, cluster::Cluster<Dimensions, ParticleType>* clusters) {
+    f32 distance = 0.0f;
+
+    for (size_t cluster_idx = 0; cluster_idx < ClusterCount; ++cluster_idx) {
+        const auto& cluster = clusters[cluster_idx];
+
+        for (size_t offset = 0; offset < cluster.particle_count; ++offset) {
+            auto particle_idx = cluster.particle_offset;
+
+            const auto& particle = particles[particle_idx];
+
+            distance += math::distance(particle.position, cluster.centroid.position);
+        }
+    }
+
+    return distance / static_cast<f32>(ParticleCount);
+}
