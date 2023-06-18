@@ -108,6 +108,103 @@ void do_a_cluster_job_a1(
     // // clang-format on
 }
 
+template <size_t ClusterCount, size_t Attempts>
+void do_optimise_kpp_a1_job(
+    MyParticle2D*& particles, cluster::Cluster<2, MyParticle2D>*& clusters
+) {
+    constexpr cluster::KMeansOptions options
+        = { .particle_count                    = 7500,
+            .cluster_count                     = ClusterCount,
+            .max_iterations                    = 100,
+            .front_loaded                      = true,
+            .approaching_centroid_optimisation = false };
+
+    std::random_device rand_dev;
+
+    // Allocate particles.
+    particles = new MyParticle2D[7500];
+
+    // Allocate clusters.
+    clusters = new cluster::Cluster<2, MyParticle2D>[ClusterCount * 2];
+
+    f32  current_best_avg_dist = std::numeric_limits<f32>::max();
+    ui32 current_best_seed     = 0;
+
+    nbs::i64 total_us = 0;
+    for (int iteration = 0; iteration < Attempts; ++iteration) {
+        ui32 seed = rand_dev();
+
+        // Set up particles.
+        for (size_t i = 0; i < 7500; ++i) {
+            particles[i].cluster_metadata_idx = i;
+            particles[i].position             = A1_DATA[i];
+        }
+
+        // Do kpp initialisation.
+        cluster::kpp<2, MyParticle2D, options>(particles, clusters, &seed);
+
+        // Front load into first cluster.
+        clusters[0].particle_count  = 7500;
+        clusters[0].particle_offset = 0;
+
+        // Allocate buffers used for K-means.
+        cluster::KMeansBuffers<options> buffers;
+        cluster::allocate_kmeans_buffers<options>(buffers);
+
+        // Do k_means.
+        cluster::k_means<2, MyParticle2D, options>(
+            particles, clusters, clusters + ClusterCount, buffers
+        );
+
+        f32 avg_dist = statistics::
+            calculate_average_cluster_distance<2, MyParticle2D, 7500, ClusterCount>(
+                particles, clusters + ClusterCount
+            );
+        if (avg_dist < current_best_avg_dist) {
+            current_best_avg_dist = avg_dist;
+            current_best_seed     = seed;
+        }
+    }
+
+    // Now do best again for visualisation.
+
+    // Set up particles.
+    for (size_t i = 0; i < 7500; ++i) {
+        particles[i].cluster_metadata_idx = i;
+        particles[i].position             = A1_DATA[i];
+    }
+
+    // Do kpp initialisation.
+    cluster::kpp<2, MyParticle2D, options>(particles, clusters, &current_best_seed);
+
+    // Front load into first cluster.
+    clusters[0].particle_count  = 7500;
+    clusters[0].particle_offset = 0;
+
+    // Allocate buffers used for K-means.
+    cluster::KMeansBuffers<options> buffers;
+    cluster::allocate_kmeans_buffers<options>(buffers);
+
+    // Do k_means.
+    cluster::k_means<2, MyParticle2D, options>(
+        particles, clusters, clusters + ClusterCount, buffers
+    );
+
+    // // Quick check.
+    // std::cout << "    k_means centroids:" << std::endl;
+    // // clang-format off
+    // for (size_t i = 0; i < ClusterCount; ++i) {
+    //     std::cout << "        " << clusters[i + ClusterCount].centroid.position.x <<
+    //     " - "
+    //                             << clusters[i + ClusterCount].centroid.position.y <<
+    //                             std::endl;
+    // }
+    // // clang-format on
+
+    std::cout << "Achieved average particle distance to cluster: "
+              << current_best_avg_dist << std::endl;
+}
+
 template <size_t ParticleCount, size_t ClusterCount>
 void do_a_cluster_job_dim_2(
     MyParticle2D*& particles, cluster::Cluster<2, MyParticle2D>*& clusters
@@ -267,12 +364,22 @@ void do_a1_dataset_performance_case() {
     make_2d_cluster_view(particles, clusters);
 }
 
+void do_a1_dataset_optimise_kpp_case() {
+    MyParticle2D*                      particles;
+    cluster::Cluster<2, MyParticle2D>* clusters;
+
+    do_optimise_kpp_a1_job<50, 1000>(particles, clusters);
+
+    make_2d_cluster_view(particles, clusters);
+}
+
 int main() {
     std::cout << "N-Body Simulator Menu:\n"
                  "  - 2D Uniform Distribution Case (1)\n"
                  "  - 3D Uniform Distribution Case (2)\n"
                  "  - A1 Dataset Case              (3)\n"
                  "  - A1 Dataset Performance Case  (4)\n"
+                 "  - A1 Dataset Optimise KPP Case (5)\n"
               << std::endl;
 
     char resp;
@@ -286,5 +393,7 @@ int main() {
         do_a1_dataset_case();
     } else if (resp == '4') {
         do_a1_dataset_performance_case();
+    } else if (resp == '5') {
+        do_a1_dataset_optimise_kpp_case();
     }
 }
