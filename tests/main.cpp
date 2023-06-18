@@ -11,6 +11,8 @@
 
 #include "statistics/average_cluster_distance.hpp"
 
+#include "forces/gravity.hpp"
+
 using namespace nbs;
 
 // TODO(Matthew): Make timing more robust.
@@ -323,6 +325,69 @@ void do_a_cluster_job_dim_3() {
     // clang-format on
 }
 
+template <size_t ClusterCount>
+void do_run_sim_step(
+    MyParticle2D* particles, cluster::Cluster<2, MyParticle2D>* clusters
+) {
+    for (size_t cluster_idx = 0; cluster_idx < ClusterCount; ++cluster_idx) {
+        const auto& cluster = clusters[cluster_idx];
+
+        for (size_t offset = 0; offset < cluster.particle_count; ++offset) {
+            auto& particle = particles[cluster.particle_offset + offset];
+
+            particle.force = {};
+        }
+
+        for (size_t p1_offset = 0; p1_offset < cluster.particle_count; ++p1_offset) {
+            auto& particle_1 = particles[cluster.particle_offset + p1_offset];
+            for (size_t p2_offset = p1_offset + 1; p2_offset < cluster.particle_count;
+                 ++p2_offset)
+            {
+                auto& particle_2 = particles[cluster.particle_offset + p2_offset];
+
+                f32 distance_2
+                    = math::distance2(particle_1.position, particle_2.position);
+
+                // f32 force = forces::grav_with_repulsion_6<1000>(distance_2);
+                f32 force = forces::grav(distance_2);
+
+                particle_1.force
+                    += math::normalize(particle_2.position - particle_1.position)
+                       * force;
+                particle_2.force
+                    += math::normalize(particle_1.position - particle_2.position)
+                       * force;
+            }
+
+            for (size_t other_cluster_idx = 0; other_cluster_idx < ClusterCount;
+                 ++other_cluster_idx)
+            {
+                const auto& other_cluster = clusters[other_cluster_idx];
+
+                f32 distance_2
+                    = math::distance2(particle_1.position, cluster.centroid.position);
+
+                // f32 force = forces::grav_with_repulsion_6<1000>(distance_2);
+                f32 force = forces::grav(distance_2);
+
+                particle_1.force
+                    += math::normalize(cluster.centroid.position - particle_1.position)
+                       * force * static_cast<f32>(other_cluster.particle_count);
+            }
+        }
+
+        for (size_t offset = 0; offset < cluster.particle_count; ++offset) {
+            auto& particle = particles[cluster.particle_offset + offset];
+
+            const f32 t_fact = 100.0f;
+
+            particle.velocity += particle.force * t_fact;
+            particle.position
+                += particle.velocity * t_fact - 0.5f * particle.force * t_fact * t_fact;
+        }
+    }
+}
+
 void do_2D_uniform_distribution_case() {
 #define PARTICLE_COUNT 1000
 #define CLUSTER_COUNT  10
@@ -365,12 +430,43 @@ void do_a1_dataset_performance_case() {
 }
 
 void do_a1_dataset_optimise_kpp_case() {
+    const f32v4 clip_rect = f32v4(-1000.0f, 65000.0f, -1000.0f, 66000.0f);
+
     MyParticle2D*                      particles;
     cluster::Cluster<2, MyParticle2D>* clusters;
 
-    do_optimise_kpp_a1_job<50, 1000>(particles, clusters);
+    do_optimise_kpp_a1_job<50, 100>(particles, clusters);
 
-    make_2d_cluster_view(particles, clusters);
+    make_2d_cluster_view(particles, clusters, &clip_rect);
+
+    for (size_t i = 0; i < 7500; ++i) {
+        particles[i].velocity = {};
+        particles[i].force    = {};
+    }
+
+    for (size_t i = 0; i < 10; ++i) {
+        do_run_sim_step<50>(particles, clusters + 50);
+    }
+
+    make_2d_cluster_view(particles, clusters, &clip_rect);
+
+    for (size_t i = 0; i < 20; ++i) {
+        do_run_sim_step<50>(particles, clusters + 50);
+    }
+
+    make_2d_cluster_view(particles, clusters, &clip_rect);
+
+    for (size_t i = 0; i < 50; ++i) {
+        do_run_sim_step<50>(particles, clusters + 50);
+    }
+
+    make_2d_cluster_view(particles, clusters, &clip_rect);
+
+    for (size_t i = 0; i < 80; ++i) {
+        do_run_sim_step<50>(particles, clusters + 50);
+    }
+
+    make_2d_cluster_view(particles, clusters, &clip_rect);
 }
 
 int main() {
